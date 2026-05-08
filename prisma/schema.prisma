@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum TipoMetodoPago {
+  TARJETA
+  EFECTIVO
+}
+
+enum MarcaTarjeta {
+  VISA
+  MASTERCARD
+  AMEX
+  OTHER
+}
+
+enum EstadoTransaccion {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+enum EstadoReembolso {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+enum EstadoFondoSemanal {
+  ABIERTO    // current week, still accumulating
+  CERRADO    // week ended, awaiting payout request
+  LIQUIDADO  // payout executed
+}
+
+enum EstadoLiquidacion {
+  PENDIENTE
+  PROCESADA
+  FALLIDA
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+// Passenger payment method — stores gateway token, never raw card data.
+model MetodoPago {
+  id              String         @id @default(uuid())
+  idUsuario       String         // Clerk sub (passenger)
+  tipo            TipoMetodoPago
+  token           String?        // gateway token; null for EFECTIVO
+  gatewayProvider String?
+  activo          Boolean        @default(true)
+  fechaCreacion   DateTime       @default(now())
+
+  tarjeta         Tarjeta?
+  transacciones   Transaccion[]
+
+  @@map("metodos_pago")
+}
+
+// Masked card metadata for UI display — always 1:1 with a MetodoPago of type TARJETA.
+model Tarjeta {
+  id                   String       @id @default(uuid())
+  metodoPagoId         String       @unique
+  metodoPago           MetodoPago   @relation(fields: [metodoPagoId], references: [id])
+  numeroEnmascarado    String
+  marca                MarcaTarjeta
+  mesVencimiento       Int
+  anioVencimiento      Int
+  nombreTitular        String
+  direccionFacturacion String?
+  fechaAgregado        DateTime     @default(now())
+
+  @@map("tarjetas")
+}
+
+// Weekly earnings pool per driver. One record per driver per calendar week (Mon–Sun).
+// monto_neto = montoBruto - montoRetenido is always computed at payout time, never stored.
+model FondoSemanal {
+  id                 String             @id @default(uuid())
+  idConductor        String             // Clerk sub (driver)
+  periodoInicio      DateTime           // Monday 00:00 UTC
+  periodoFin         DateTime           // Sunday 23:59 UTC
+  montoBruto         Decimal            @default(0) @db.Decimal(12, 2)
+  montoRetenido      Decimal            @default(0) @db.Decimal(12, 2)
+  estado             EstadoFondoSemanal @default(ABIERTO)
+  fechaCreacion      DateTime           @default(now())
+  fechaActualizacion DateTime           @updatedAt
+
+  transacciones      Transaccion[]
+  reembolsos         Reembolso[]
+  liquidacion        Liquidacion?
+
+  // One fund per driver per week
+  @@unique([idConductor, periodoInicio])
+  @@map("fondos_semanales")
+}
+
+// A single charge event for one ride. Links passenger payment method to driver earnings.
+model Transaccion {
+  id                   String            @id @default(uuid())
+  idViaje              String            // from Driver App
+  idPasajero           String            // Clerk sub
+  idConductor          String            // Clerk sub — used to attribute earning to fund
+  metodoPagoId         String?
+  metodoPago           MetodoPago?       @relation(fields: [metodoPagoId], references: [id])
+  fondoSemanalId       String?
+  fondoSemanal         FondoSemanal?     @relation(fields: [fondoSemanalId], references: [id])
+  monto                Decimal           @db.Decimal(12, 2)
+  moneda               String            @default("ARS")
+  estado               EstadoTransaccion @default(PENDING)
+  gatewayProvider      String?
+  gatewayTransactionId String?
+  detalleGateway       Json?             // full gateway response for audit
+  fechaCreacion        DateTime          @default(now())
+  fechaActualizacion   DateTime          @updatedAt
+
+  reembolsos           Reembolso[]
+
+  @@map("transacciones")
+}
+
+// Refund against a transaction. Debits the driver's fund (current week if original is
+// already LIQUIDADO; original week's fund otherwise).
+model Reembolso {
+  id                 String          @id @default(uuid())
+  transaccionId      String
+  transaccion        Transaccion     @relation(fields: [transaccionId], references: [id])
+  fondoSemanalId     String          // fund being debited (may differ from transaction's fund)
+  fondoSemanal       FondoSemanal    @relation(fields: [fondoSemanalId], references: [id])
+  monto              Decimal         @db.Decimal(12, 2)
+  estado             EstadoReembolso @default(PENDING)
+  razon              String
+  gatewayRefundId    String?
+  fechaSolicitud     DateTime        @default(now())
+  fechaActualizacion DateTime        @updatedAt
+
+  @@map("reembolsos")
+}
+
+// Payout record created when a driver requests their weekly earnings.
+// montoPagado = fondoSemanal.montoBruto - fondoSemanal.montoRetenido at request time.
+model Liquidacion {
+  id                 String            @id @default(uuid())
+  fondoSemanalId     String            @unique
+  fondoSemanal       FondoSemanal      @relation(fields: [fondoSemanalId], references: [id])
+  idConductor        String            // Clerk sub (denormalized for direct queries)
+  montoPagado        Decimal           @db.Decimal(12, 2)
+  estado             EstadoLiquidacion @default(PENDIENTE)
+  fechaProgramada    DateTime
+  fechaEjecutada     DateTime?
+  detalle            Json?             // payout gateway response
+  fechaCreacion      DateTime          @default(now())
+  fechaActualizacion DateTime          @updatedAt
+
+  @@map("liquidaciones")
+}
