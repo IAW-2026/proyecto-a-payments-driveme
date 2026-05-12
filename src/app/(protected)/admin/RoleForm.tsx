@@ -51,7 +51,7 @@ export default function RoleForm() {
         Actualizar rol de usuario
       </h2>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} aria-label="Actualizar rol de usuario">
         <div className="field-group single" style={{ marginBottom: '1rem' }}>
           <label>
             Clerk User ID

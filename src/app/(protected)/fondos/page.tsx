@@ -1,5 +1,12 @@
+import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import DriverSearchForm from './DriverSearchForm'
+
+export const metadata: Metadata = {
+  title: 'Panel Financiero — DriveMe Payments',
+  description: 'Fondos de conductores y banco principal',
+  robots: { index: false, follow: false },
+}
 
 const BADGE_L: Record<string, string> = {
   PROCESADA: 'badge-captured',

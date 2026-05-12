@@ -55,7 +55,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
             {/* Nav — cuando el user se logueo */}
             <Show when="signed-in">
-              <nav style={{ display: 'flex', gap: '2rem' }}>
+              <nav aria-label="Navegación principal" style={{ display: 'flex', gap: '2rem' }}>
                 {NAV.map(({ href, label }) => (
                   <Link key={href} href={href} className="nav-link">{label}</Link>
                 ))}

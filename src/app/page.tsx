@@ -1,5 +1,12 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import CTAButtons from './CTAButtons'
+
+export const metadata: Metadata = {
+  title: 'DriveMe Payments',
+  description: 'Panel de administración del módulo de pagos — DriveMe IAW 2026',
+  robots: { index: true, follow: true },
+}
 
 const FEATURES = [
   {
@@ -24,7 +31,7 @@ const FEATURES = [
 
 export default function Home() {
   return (
-    <div className="home-wrap">
+    <main className="home-wrap">
       <div className="orb orb-1" />
       <div className="orb orb-2" />
       <div className="orb orb-3" />
@@ -51,11 +58,11 @@ export default function Home() {
         {FEATURES.map((f) => (
           <Link key={f.href} href={f.href} className="feature-card" style={{ textDecoration: 'none' }}>
             <div className="feature-icon">{f.icon}</div>
-            <h3>{f.title}</h3>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700 }}>{f.title}</h2>
             <p>{f.desc}</p>
           </Link>
         ))}
       </section>
-    </div>
+    </main>
   )
 }

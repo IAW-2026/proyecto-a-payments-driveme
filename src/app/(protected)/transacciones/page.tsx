@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import UserSearchForm from './UserSearchForm'
+
+export const metadata: Metadata = {
+  title: 'Transacciones — DriveMe Payments',
+  description: 'Historial de transacciones por usuario',
+  robots: { index: false, follow: false },
+}
 
 const PAGE_SIZE = 10
 

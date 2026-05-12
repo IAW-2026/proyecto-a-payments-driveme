@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Métodos de Pago — DriveMe Payments',
+  description: 'Integración con Mercado Pago Sandbox',
+  robots: { index: false, follow: false },
+}
+
 export default function MetodosPage() {
   return (
     <main className="page-shell">
