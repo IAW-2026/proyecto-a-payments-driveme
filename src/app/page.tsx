@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import CTAButtons from './CTAButtons'
-import RoleSelector from './RoleSelector'
 import { auth } from '@/lib/auth'
 import { getUserRole, Rol } from '@/lib/roles'
 
@@ -59,8 +58,6 @@ export default async function Home() {
           <CTAButtons />
         </div>
       </section>
-
-      {userId && <RoleSelector currentRol={rol} />}
 
       <section className="features">
         {visible.map((f) => (
