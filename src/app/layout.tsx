@@ -33,6 +33,12 @@ const NAV = [
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es">
+      <head>
+        <link rel="preconnect" href="https://scdn.clerk.com" />
+        <link rel="preconnect" href="https://segapi.clerk.com" />
+        <link rel="preconnect" href="https://clerk-telemetry.com" />
+        <link rel="dns-prefetch" href="https://clerk.accounts.dev" />
+      </head>
       <body className={`${fraunces.variable} ${jakarta.variable}`}>
         <ClerkProvider>
           <header style={{
