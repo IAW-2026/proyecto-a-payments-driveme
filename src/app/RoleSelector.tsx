@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Rol } from '@/generated/prisma/client'
+import { Rol } from '@/lib/enums'
 
 export default function RoleSelector({ currentRol }: { currentRol: Rol | null }) {
   const router = useRouter()

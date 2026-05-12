@@ -5,7 +5,6 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "cross-env NODE_OPTIONS=--use-system-ca next dev",
-    "type": "module",
     "build": "cross-env NODE_OPTIONS=--use-system-ca next build",
     "start": "cross-env NODE_OPTIONS=--use-system-ca next start",
     "lint": "next lint",
