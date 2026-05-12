@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 const NAV = [
   { href: '/metodos',       label: 'Métodos de Pago' },
   { href: '/transacciones', label: 'Transacciones' },
-  { href: '/fondos',        label: 'Mis Fondos' },
+  { href: '/fondos',        label: 'Panel Financiero' },
 ]
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
