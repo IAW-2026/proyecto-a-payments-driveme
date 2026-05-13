@@ -1,7 +1,7 @@
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
-  
+
 }
 
 datasource db {
@@ -16,25 +16,16 @@ enum Rol {
   ADMIN
 }
 
-enum TipoMetodoPago {
-  TARJETA
+enum MetodoPago {
   EFECTIVO
-}
-
-enum MarcaTarjeta {
-  VISA
-  MASTERCARD
-  AMEX
-  OTHER
+  MERCADO_PAGO
 }
 
 enum EstadoTransaccion {
-  PENDING
-  AUTHORIZED
-  CAPTURED
-  FAILED
-  REFUNDED
-  CANCELED
+  PENDIENTE
+  CONFIRMADO
+  CANCELADO
+  REEMBOLSADO
 }
 
 enum EstadoReembolso {
@@ -42,12 +33,6 @@ enum EstadoReembolso {
   COMPLETED
   FAILED
   REVERSED
-}
-
-enum EstadoFondoSemanal {
-  ABIERTO    // current week, still accumulating
-  CERRADO    // week ended, awaiting payout request
-  LIQUIDADO  // payout executed
 }
 
 enum EstadoLiquidacion {
@@ -59,98 +44,37 @@ enum EstadoLiquidacion {
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model Usuario {
-  id            String   @id          
+  id            String   @id
   rol           Rol      @default(RIDER)
   fechaCreacion DateTime @default(now())
 
   @@map("usuarios")
 }
 
-
-model MetodoPago {
-  id              String         @id @default(uuid())
-  idUsuario       String         
-  tipo            TipoMetodoPago
-  token           String?        
-  gatewayProvider String?
-  activo          Boolean        @default(true)
-  fechaCreacion   DateTime       @default(now())
-
-  tarjeta         Tarjeta?
-  transacciones   Transaccion[]
-
-  @@map("metodos_pago")
-}
-
-
-model Tarjeta {
-  id                   String       @id @default(uuid())
-  metodoPagoId         String       @unique
-  metodoPago           MetodoPago   @relation(fields: [metodoPagoId], references: [id])
-  numeroEnmascarado    String
-  marca                MarcaTarjeta
-  numero               Int
-  anioVencimiento      Int
-  mesVencimiento       Int
-  nombreTitular        String
-  direccionFacturacion String?
-  fechaAgregado        DateTime     @default(now())
-
-  @@map("tarjetas")
-}
-
-
-model FondoSemanal {
-  id                 String             @id @default(uuid())
-  idConductor        String             // Clerk sub (driver)
-  periodoInicio      DateTime           // Monday 00:00 UTC
-  periodoFin         DateTime           // Sunday 23:59 UTC
-  montoBruto         Decimal            @default(0) @db.Decimal(12, 2)
-  montoRetenido      Decimal            @default(0) @db.Decimal(12, 2)
-  estado             EstadoFondoSemanal @default(ABIERTO)
-  fechaCreacion      DateTime           @default(now())
-  fechaActualizacion DateTime           @updatedAt
-
-  transacciones      Transaccion[]
-  reembolsos         Reembolso[]
-  liquidacion        Liquidacion?
-
-  // One fund per driver per week
-  @@unique([idConductor, periodoInicio])
-  @@map("fondos_semanales")
-}
-
-
 model Transaccion {
   id                   String            @id @default(uuid())
-  idViaje              String            
-  idPasajero           String            
-  idConductor          String            
-  metodoPagoId         String?
-  metodoPago           MetodoPago?       @relation(fields: [metodoPagoId], references: [id])
-  fondoSemanalId       String?
-  fondoSemanal         FondoSemanal?     @relation(fields: [fondoSemanalId], references: [id])
+  idViaje              String            @unique
+  idPasajero           String
+  idConductor          String
+  metodoPago           MetodoPago
   monto                Decimal           @db.Decimal(12, 2)
   moneda               String            @default("ARS")
-  estado               EstadoTransaccion @default(PENDING)
+  estado               EstadoTransaccion @default(PENDIENTE)
   gatewayProvider      String?
   gatewayTransactionId String?
-  detalleGateway       Json?             
+  detalleGateway       Json?
   fechaCreacion        DateTime          @default(now())
   fechaActualizacion   DateTime          @updatedAt
 
   reembolsos           Reembolso[]
 
-  @@map("transacciones")
+  @@map("transaccion")
 }
-
 
 model Reembolso {
   id                 String          @id @default(uuid())
   transaccionId      String
   transaccion        Transaccion     @relation(fields: [transaccionId], references: [id])
-  fondoSemanalId     String          
-  fondoSemanal       FondoSemanal    @relation(fields: [fondoSemanalId], references: [id])
   monto              Decimal         @db.Decimal(12, 2)
   estado             EstadoReembolso @default(PENDING)
   razon              String
@@ -158,22 +82,44 @@ model Reembolso {
   fechaSolicitud     DateTime        @default(now())
   fechaActualizacion DateTime        @updatedAt
 
-  @@map("reembolsos")
+  @@map("reembolso")
 }
 
+model Billetera {
+  id                        String   @id @default(uuid())
+  idConductor               String   @unique
+  montoSemanaActual         Decimal  @default(0) @db.Decimal(12, 2)
+  montoRetenidoSemanaActual Decimal  @default(0) @db.Decimal(12, 2)
+  montoHistorico            Decimal  @default(0) @db.Decimal(12, 2)
+  montoRetenidoHistorico    Decimal  @default(0) @db.Decimal(12, 2)
+  montoEfectivoPendiente    Decimal  @default(0) @db.Decimal(12, 2)
+  fechaCreacion             DateTime @default(now())
+  fechaActualizacion        DateTime @updatedAt
+
+  @@map("billetera")
+}
 
 model Liquidacion {
   id                 String            @id @default(uuid())
-  fondoSemanalId     String            @unique
-  fondoSemanal       FondoSemanal      @relation(fields: [fondoSemanalId], references: [id])
-  idConductor        String            
+  idConductor        String
   montoPagado        Decimal           @db.Decimal(12, 2)
   estado             EstadoLiquidacion @default(PENDIENTE)
   fechaProgramada    DateTime
   fechaEjecutada     DateTime?
-  detalle            Json?             
+  detalle            Json?
   fechaCreacion      DateTime          @default(now())
   fechaActualizacion DateTime          @updatedAt
 
-  @@map("liquidaciones")
+  @@map("liquidacion")
+}
+
+model BancoCentral {
+  id                          String   @id @default(uuid())
+  fondosEmpresa               Decimal  @default(0) @db.Decimal(12, 2)
+  fondosADebitar              Decimal  @default(0) @db.Decimal(12, 2)
+  fondosDebitadosHistorico    Decimal  @default(0) @db.Decimal(12, 2)
+  fondosReembolsadosHistorico Decimal  @default(0) @db.Decimal(12, 2)
+  fechaActualizacion          DateTime @updatedAt
+
+  @@map("banco_central")
 }

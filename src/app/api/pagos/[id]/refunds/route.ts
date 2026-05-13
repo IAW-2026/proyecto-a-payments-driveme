@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getUserRole, Rol } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
-import { getWeekBounds } from "@/lib/semana";
 
 export async function POST(
   req: Request,
@@ -22,10 +21,7 @@ export async function POST(
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const transaccion = await prisma.transaccion.findUnique({
-    where: { id },
-    include: { fondoSemanal: true },
-  });
+  const transaccion = await prisma.transaccion.findUnique({ where: { id } });
 
   if (!transaccion) {
     return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
@@ -33,9 +29,9 @@ export async function POST(
   if (transaccion.idPasajero !== userId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  if (transaccion.estado !== "CAPTURED") {
+  if (transaccion.estado !== "CONFIRMADO") {
     return NextResponse.json(
-      { error: "Only CAPTURED transactions can be refunded" },
+      { error: "Only CONFIRMADO transactions can be refunded" },
       { status: 422 }
     );
   }
@@ -46,33 +42,24 @@ export async function POST(
     );
   }
 
-  // Determine which fund to debit
-  let fondoSemanalId: string;
-  if (transaccion.fondoSemanal && transaccion.fondoSemanal.estado !== "LIQUIDADO") {
-    fondoSemanalId = transaccion.fondoSemanal.id;
-  } else {
-    // Original fund already paid out — absorb into driver's current open week
-    const { periodoInicio, periodoFin } = getWeekBounds();
-    const fondoActual = await prisma.fondoSemanal.upsert({
-      where: {
-        idConductor_periodoInicio: {
-          idConductor: transaccion.idConductor,
-          periodoInicio,
-        },
-      },
-      create: { idConductor: transaccion.idConductor, periodoInicio, periodoFin },
-      update: {},
-    });
-    fondoSemanalId = fondoActual.id;
-  }
-
   const [reembolso] = await prisma.$transaction([
     prisma.reembolso.create({
-      data: { transaccionId: transaccion.id, fondoSemanalId, monto, razon },
+      data: { transaccionId: transaccion.id, monto, razon, estado: "COMPLETED" },
     }),
-    prisma.fondoSemanal.update({
-      where: { id: fondoSemanalId },
-      data: { montoRetenido: { increment: monto } },
+    prisma.billetera.update({
+      where: { idConductor: transaccion.idConductor },
+      data: {
+        montoSemanaActual:         { decrement: monto },
+        montoRetenidoSemanaActual: { increment: monto },
+      },
+    }),
+    prisma.bancoCentral.update({
+      where: { id: "main" },
+      data: { fondosReembolsadosHistorico: { increment: monto } },
+    }),
+    prisma.transaccion.update({
+      where: { id: transaccion.id },
+      data:  { estado: "REEMBOLSADO" },
     }),
   ]);
 

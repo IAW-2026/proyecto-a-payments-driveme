@@ -10,16 +10,16 @@ export async function POST() {
   const rol = await getUserRole(userId);
   if (rol !== Rol.DRIVER) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const fondo = await prisma.fondoSemanal.findFirst({
-    where: { idConductor: userId, estado: { not: "LIQUIDADO" } },
-    orderBy: { periodoInicio: "desc" },
-  });
+  const billetera = await prisma.billetera.findUnique({ where: { idConductor: userId } });
 
-  if (!fondo) {
-    return NextResponse.json({ error: "No funds available for payout" }, { status: 404 });
+  if (!billetera) {
+    return NextResponse.json({ error: "No wallet found for this driver" }, { status: 404 });
   }
 
-  const montoPagado = Number(fondo.montoBruto) - Number(fondo.montoRetenido);
+  const semana = Number(billetera.montoSemanaActual);
+  const retenido = Number(billetera.montoRetenidoSemanaActual);
+  const montoPagado = semana - retenido;
+
   if (montoPagado <= 0) {
     return NextResponse.json(
       { error: "Net payout is zero or negative after refund deductions" },
@@ -32,26 +32,35 @@ export async function POST() {
   const [liquidacion] = await prisma.$transaction([
     prisma.liquidacion.create({
       data: {
-        fondoSemanalId: fondo.id,
         idConductor: userId,
         montoPagado,
         estado: "PROCESADA",
         fechaProgramada: ahora,
-        fechaEjecutada: ahora,
-        detalle: { fondoId: fondo.id, mensaje: "Payout solicitado por el conductor" },
+        fechaEjecutada:  ahora,
+        detalle: { mensaje: "Payout solicitado por el conductor" },
       },
     }),
-    prisma.fondoSemanal.update({
-      where: { id: fondo.id },
-      data: { estado: "LIQUIDADO" },
+    prisma.billetera.update({
+      where: { idConductor: userId },
+      data: {
+        montoHistorico:           { increment: semana },
+        montoRetenidoHistorico:   { increment: retenido },
+        montoSemanaActual:        0,
+        montoRetenidoSemanaActual: 0,
+      },
+    }),
+    prisma.bancoCentral.update({
+      where: { id: "main" },
+      data: {
+        fondosADebitar:           { decrement: montoPagado },
+        fondosDebitadosHistorico: { increment: montoPagado },
+      },
     }),
   ]);
 
   return NextResponse.json({
     id_liquidacion: liquidacion.id,
-    monto_pagado: montoPagado,
-    periodo_inicio: fondo.periodoInicio,
-    periodo_fin: fondo.periodoFin,
-    estado: liquidacion.estado,
+    monto_pagado:   montoPagado,
+    estado:         liquidacion.estado,
   });
 }

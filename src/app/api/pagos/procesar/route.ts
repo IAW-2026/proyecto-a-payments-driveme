@@ -1,51 +1,69 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getUserRole, Rol } from "@/lib/roles";
+import { ensureUser, Rol } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
-import { getWeekBounds } from "@/lib/semana";
+
+const CORTE = 0.10;
+const NETO  = 0.90;
 
 function simulateGateway(monto: number) {
   const success = Math.random() > 0.05;
   return {
-    estado: success ? "CAPTURED" : "FAILED",
+    estado: success ? "CONFIRMADO" : "CANCELADO",
     gatewayTransactionId: crypto.randomUUID(),
     detalle: { success, monto, ts: new Date().toISOString() },
   } as const;
+}
+
+async function registrarEnBilletera(idConductor: string, monto: number, esEfectivo: boolean) {
+  const neto  = monto * NETO;
+  const corte = monto * CORTE;
+  await prisma.billetera.upsert({
+    where:  { idConductor },
+    create: {
+      idConductor,
+      montoSemanaActual:      neto,
+      montoEfectivoPendiente: esEfectivo ? corte : 0,
+    },
+    update: {
+      montoSemanaActual:      { increment: neto },
+      ...(esEfectivo && { montoEfectivoPendiente: { increment: corte } }),
+    },
+  });
+}
+
+async function registrarEnBanco(monto: number) {
+  const neto  = monto * NETO;
+  const corte = monto * CORTE;
+  await prisma.bancoCentral.upsert({
+    where:  { id: "main" },
+    create: { id: "main", fondosADebitar: neto, fondosEmpresa: corte },
+    update: { fondosADebitar: { increment: neto }, fondosEmpresa: { increment: corte } },
+  });
 }
 
 export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const rol = await getUserRole(userId);
+  const rol = await ensureUser(userId, Rol.DRIVER);
   if (rol !== Rol.DRIVER) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { id_viaje, id_pasajero, monto, tipo } = body;
+  const { id_viaje, id_pasajero, monto, metodo_pago } = body;
 
-  if (!id_viaje || !id_pasajero || monto == null || !tipo) {
+  if (!id_viaje || !id_pasajero || monto == null || !metodo_pago) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
-  if (tipo !== "TARJETA" && tipo !== "EFECTIVO") {
-    return NextResponse.json({ error: "tipo must be TARJETA or EFECTIVO" }, { status: 400 });
+  if (metodo_pago !== "EFECTIVO" && metodo_pago !== "MERCADO_PAGO") {
+    return NextResponse.json({ error: "metodo_pago must be EFECTIVO or MERCADO_PAGO" }, { status: 400 });
   }
 
-  let metodoPagoId: string | null = null;
-  let estado: string = "CAPTURED";
+  let estado: "CONFIRMADO" | "CANCELADO" = "CONFIRMADO";
   let gatewayTransactionId: string | null = null;
   let detalleGateway: object | null = null;
 
-  if (tipo === "TARJETA") {
-    const metodoPago = await prisma.metodoPago.findFirst({
-      where: { idUsuario: id_pasajero, tipo: "TARJETA", activo: true },
-    });
-    if (!metodoPago) {
-      return NextResponse.json(
-        { error: "No active payment method found for passenger" },
-        { status: 422 }
-      );
-    }
-    metodoPagoId = metodoPago.id;
+  if (metodo_pago === "MERCADO_PAGO") {
     const gw = simulateGateway(monto);
     estado = gw.estado;
     gatewayTransactionId = gw.gatewayTransactionId;
@@ -54,37 +72,30 @@ export async function POST(req: Request) {
 
   const transaccion = await prisma.transaccion.create({
     data: {
-      idViaje: id_viaje,
+      idViaje:    id_viaje,
       idPasajero: id_pasajero,
       idConductor: userId,
-      metodoPagoId,
+      metodoPago: metodo_pago as any,
       monto,
       estado: estado as any,
-      gatewayProvider: tipo === "TARJETA" ? "simulado" : null,
+      gatewayProvider:      metodo_pago === "MERCADO_PAGO" ? "mp_sandbox" : null,
       gatewayTransactionId,
       detalleGateway: detalleGateway ?? undefined,
     },
   });
 
-  if (estado === "CAPTURED") {
-    const { periodoInicio, periodoFin } = getWeekBounds();
-    const fondo = await prisma.fondoSemanal.upsert({
-      where: { idConductor_periodoInicio: { idConductor: userId, periodoInicio } },
-      create: { idConductor: userId, periodoInicio, periodoFin, montoBruto: monto },
-      update: { montoBruto: { increment: monto } },
-    });
-    await prisma.transaccion.update({
-      where: { id: transaccion.id },
-      data: { fondoSemanalId: fondo.id },
-    });
+  if (estado === "CONFIRMADO") {
+    await Promise.all([
+      registrarEnBilletera(userId, monto, metodo_pago === "EFECTIVO"),
+      registrarEnBanco(monto),
+    ]);
 
-    // Notify Rider App — fire and forget
     const riderUrl = process.env.RIDER_APP_URL;
     if (riderUrl) {
       fetch(`${riderUrl}/api/viajes/${id_viaje}/pago-confirmado`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_transaccion: transaccion.id, estado: "CAPTURED", monto }),
+        body: JSON.stringify({ id_transaccion: transaccion.id, estado: "CONFIRMADO", monto }),
       }).catch(() => {});
     }
   }

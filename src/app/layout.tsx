@@ -25,7 +25,6 @@ export const metadata: Metadata = {
 }
 
 const NAV = [
-  { href: '/metodos',       label: 'Métodos de Pago' },
   { href: '/transacciones', label: 'Transacciones' },
   { href: '/fondos',        label: 'Panel Financiero' },
 ]

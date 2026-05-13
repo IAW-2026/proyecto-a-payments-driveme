@@ -10,21 +10,15 @@ export const metadata: Metadata = {
 
 const FEATURES = [
   {
-    icon: '💳',
-    title: 'Métodos de Pago',
-    desc: 'Integración con Mercado Pago Sandbox para gestionar métodos de pago de usuarios (en construcción).',
-    href: '/metodos',
-  },
-  {
     icon: '📊',
     title: 'Transacciones',
     desc: 'Consultá el historial de transacciones de cualquier usuario registrado. Incluye detalle de reembolsos.',
     href: '/transacciones',
   },
   {
-    icon: '💰',
+    icon: '🏦',
     title: 'Panel Financiero',
-    desc: 'Revisá los fondos semanales de conductores y el balance general del banco principal de la app.',
+    desc: 'Revisá la billetera de conductores, retenciones, liquidaciones e histórico del Banco Central.',
     href: '/fondos',
   },
 ]
@@ -40,9 +34,9 @@ export default function Home() {
         <p className="hero-overline">DriveMe · IAW 2026</p>
 
         <h1 className="hero-title">
-          <span className="w1">Gesstion de: Pagos</span>
+          <span className="w1">Gestión de Pagos</span>
           <span className="w2">Liquidaciones</span>
-          <span className="w3">Metodos de pago</span>
+          <span className="w3">Billeteras</span>
         </h1>
 
         <p className="hero-sub">

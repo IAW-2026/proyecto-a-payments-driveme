@@ -1,3 +1,4 @@
+import React from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
@@ -12,12 +13,10 @@ export const metadata: Metadata = {
 const PAGE_SIZE = 10
 
 const BADGE: Record<string, string> = {
-  CAPTURED:   'badge-captured',
-  PENDING:    'badge-pending',
-  FAILED:     'badge-failed',
-  REFUNDED:   'badge-refunded',
-  CANCELED:   'badge-canceled',
-  AUTHORIZED: 'badge-pending',
+  CONFIRMADO:  'badge-captured',
+  PENDIENTE:   'badge-pending',
+  CANCELADO:   'badge-failed',
+  REEMBOLSADO: 'badge-refunded',
 }
 
 const BADGE_R: Record<string, string> = {
@@ -52,7 +51,7 @@ export default async function TransaccionesPage({
     }),
     prisma.transaccion.findMany({
       where: { OR: [{ idPasajero: targetId }, { idConductor: targetId }] },
-      include: { metodoPago: { include: { tarjeta: true } }, reembolsos: true },
+      include: { reembolsos: true },
       orderBy: { fechaCreacion: 'desc' },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -88,8 +87,8 @@ export default async function TransaccionesPage({
               </thead>
               <tbody>
                 {txs.map((tx) => (
-                  <>
-                    <tr key={tx.id}>
+                  <React.Fragment key={tx.id}>
+                    <tr>
                       <td style={{ color: 'var(--muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                         {fmtDate(tx.fechaCreacion)}
                       </td>
@@ -103,10 +102,9 @@ export default async function TransaccionesPage({
                         ${Number(tx.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })} {tx.moneda}
                       </td>
                       <td>
-                        {tx.metodoPago?.tarjeta
-                          ? <span className="card-brand">{tx.metodoPago.tarjeta.marca} •{tx.metodoPago.tarjeta.numeroEnmascarado}</span>
-                          : <span style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>Efectivo</span>
-                        }
+                        <span style={{ fontSize: '0.8rem', color: tx.metodoPago === 'MERCADO_PAGO' ? 'var(--accent)' : 'var(--muted)' }}>
+                          {tx.metodoPago === 'MERCADO_PAGO' ? 'Mercado Pago' : 'Efectivo'}
+                        </span>
                       </td>
                       <td><span className={`badge ${BADGE[tx.estado] ?? 'badge-pending'}`}>{tx.estado}</span></td>
                       <td style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{tx.reembolsos.length || '—'}</td>
@@ -127,7 +125,7 @@ export default async function TransaccionesPage({
                         <td />
                       </tr>
                     ))}
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
