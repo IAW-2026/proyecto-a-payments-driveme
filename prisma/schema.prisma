@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Rol {
+  RIDER
+  DRIVER
+  ADMIN
+}
+
+enum MetodoPago {
+  EFECTIVO
+  MERCADO_PAGO
+}
+
+enum EstadoTransaccion {
+  PENDIENTE
+  CONFIRMADO
+  CANCELADO
+  REEMBOLSADO
+}
+
+enum EstadoReembolso {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+enum EstadoLiquidacion {
+  PENDIENTE
+  PROCESADA
+  FALLIDA
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Usuario {
+  id            String   @id
+  rol           Rol      @default(RIDER)
+  fechaCreacion DateTime @default(now())
+
+  @@map("usuarios")
+}
+
+model Transaccion {
+  id                   String            @id @default(uuid())
+  idViaje              String            @unique
+  idPasajero           String
+  idConductor          String
+  metodoPago           MetodoPago
+  monto                Decimal           @db.Decimal(12, 2)
+  moneda               String            @default("ARS")
+  estado               EstadoTransaccion @default(PENDIENTE)
+  gatewayProvider      String?
+  gatewayTransactionId String?
+  detalleGateway       Json?
+  fechaCreacion        DateTime          @default(now())
+  fechaActualizacion   DateTime          @updatedAt
+
+  reembolsos           Reembolso[]
+
+  @@map("transaccion")
+}
+
+model Reembolso {
+  id                 String          @id @default(uuid())
+  transaccionId      String
+  transaccion        Transaccion     @relation(fields: [transaccionId], references: [id])
+  monto              Decimal         @db.Decimal(12, 2)
+  estado             EstadoReembolso @default(PENDING)
+  razon              String
+  gatewayRefundId    String?
+  fechaSolicitud     DateTime        @default(now())
+  fechaActualizacion DateTime        @updatedAt
+
+  @@map("reembolso")
+}
+
+model Billetera {
+  id                        String   @id @default(uuid())
+  idConductor               String   @unique
+  montoSemanaActual         Decimal  @default(0) @db.Decimal(12, 2)
+  montoRetenidoSemanaActual Decimal  @default(0) @db.Decimal(12, 2)
+  montoHistorico            Decimal  @default(0) @db.Decimal(12, 2)
+  montoRetenidoHistorico    Decimal  @default(0) @db.Decimal(12, 2)
+  montoEfectivoPendiente    Decimal  @default(0) @db.Decimal(12, 2)
+  fechaCreacion             DateTime @default(now())
+  fechaActualizacion        DateTime @updatedAt
+
+  @@map("billetera")
+}
+
+model Liquidacion {
+  id                 String            @id @default(uuid())
+  idConductor        String
+  montoPagado        Decimal           @db.Decimal(12, 2)
+  estado             EstadoLiquidacion @default(PENDIENTE)
+  fechaProgramada    DateTime
+  fechaEjecutada     DateTime?
+  detalle            Json?
+  fechaCreacion      DateTime          @default(now())
+  fechaActualizacion DateTime          @updatedAt
+
+  @@map("liquidacion")
+}
+
+model BancoCentral {
+  id                          String   @id @default(uuid())
+  fondosEmpresa               Decimal  @default(0) @db.Decimal(12, 2)
+  fondosADebitar              Decimal  @default(0) @db.Decimal(12, 2)
+  fondosDebitadosHistorico    Decimal  @default(0) @db.Decimal(12, 2)
+  fondosReembolsadosHistorico Decimal  @default(0) @db.Decimal(12, 2)
+  fechaActualizacion          DateTime @updatedAt
+
+  @@map("banco_central")
+}
