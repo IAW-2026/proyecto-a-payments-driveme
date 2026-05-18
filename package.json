@@ -2,6 +2,7 @@
   "name": "payments-driveme",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "cross-env NODE_OPTIONS=--use-system-ca next dev",
@@ -23,6 +24,9 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "svix": "^1.93.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@clerk/shared", "@prisma/engines", "prisma", "sharp", "unrs-resolver"]
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.6",
