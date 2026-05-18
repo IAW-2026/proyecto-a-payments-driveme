@@ -56,7 +56,7 @@
 | Rider App     | Consultar telemetría del viaje                                 | Driver App  | GET /api/viajes/{id_viaje}/telemetria           |
 | Driver App    | Actualizar estado del viaje (inicio/fin)                       | Driver App  | PATCH /api/viajes/{id_viaje}/estado             |
 | Driver App    | Cancelar viaje ya aceptado (solo Conductor)                    | Driver App  | PATCH /api/viajes/{id_viaje}                    |
-| Driver App    | Finalizar viaje y procesar pago                                | Payments App| POST /api/pagos/procesar                        |
+| Driver App    | Finalizar viaje y procesar pago                                | Payments App| POST /api/pagos/transacciones                   |
 | Rider App     | Enviar calificación del conductor                              | Feedback App| POST /api/resenas                               |
 | Driver App    | Enviar calificación del pasajero                               | Feedback App| POST /api/resenas                               |
 | Rider App     | Cancelar solicitud en búsqueda (solo Pasajero)                 | Rider App   | PATCH /api/solicitudes/{id_solicitud}           |

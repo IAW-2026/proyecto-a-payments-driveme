@@ -1,10 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { initMercadoPago, Wallet } from '@mercadopago/sdk-react'
+
+initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!)
 
 const BADGE: Record<string, string> = {
-  CONFIRMADO: 'badge-captured',
-  CANCELADO:  'badge-failed',
+  CAPTURED: 'badge-captured',
+  FAILED:   'badge-failed',
+  PENDING:  'badge-pending',
 }
 
 function fmt(n: number) {
@@ -24,7 +28,9 @@ function delta(before: number | null | undefined, after: number) {
 
 type Result = {
   id_transaccion: string
-  estado: 'CONFIRMADO' | 'CANCELADO'
+  estado: 'CAPTURED' | 'FAILED' | 'PENDING'
+  preference_id?: string
+  init_point?: string
   billetera_antes: { montoSemanaActual: number; montoEfectivoPendiente: number } | null
   billetera_despues: { montoSemanaActual: number; montoEfectivoPendiente: number } | null
   banco_despues: { fondosADebitar: number; fondosEmpresa: number } | null
@@ -46,7 +52,7 @@ export default function TestProcesarForm() {
     setResult(null)
     setMsg(null)
     try {
-      const res = await fetch('/api/pagos/admin/test/procesar', {
+      const res = await fetch('/api/pagos/admin/test/transacciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idViaje, idPasajero, idConductor, monto: Number(monto), metodoPago }),
@@ -93,8 +99,8 @@ export default function TestProcesarForm() {
           <label>
             Método de pago
             <select value={metodoPago} onChange={e => setMetodoPago(e.target.value)}>
-              <option value="EFECTIVO">Efectivo</option>
-              <option value="MERCADO_PAGO">Mercado Pago (95% éxito)</option>
+              <option value="EFECTIVO">Efectivo (inmediato)</option>
+              <option value="MERCADO_PAGO">Mercado Pago (Checkout Pro)</option>
             </select>
           </label>
         </div>
@@ -113,12 +119,22 @@ export default function TestProcesarForm() {
             <span className={`badge ${BADGE[result.estado] ?? 'badge-pending'}`} style={{ marginTop: '0.4rem', display: 'inline-block' }}>
               {result.estado}
             </span>
-            {result.estado === 'CANCELADO' && (
+
+            {result.estado === 'PENDING' && result.preference_id && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <p style={{ fontSize: '0.82rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
+                  El pasajero completa el pago aquí:
+                </p>
+                <Wallet initialization={{ preferenceId: result.preference_id }} />
+              </div>
+            )}
+
+            {result.estado === 'FAILED' && (
               <p className="msg-error" style={{ marginTop: '0.5rem' }}>Gateway rechazó el pago. La billetera no fue modificada.</p>
             )}
           </div>
 
-          {result.estado === 'CONFIRMADO' && result.billetera_despues && (
+          {result.estado === 'CAPTURED' && result.billetera_despues && (
             <div style={{ marginBottom: '1rem' }}>
               <p style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>Billetera del conductor</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.82rem' }}>
@@ -142,7 +158,7 @@ export default function TestProcesarForm() {
             </div>
           )}
 
-          {result.banco_despues && result.estado === 'CONFIRMADO' && (
+          {result.banco_despues && result.estado === 'CAPTURED' && (
             <div>
               <p style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>Banco Central</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.82rem' }}>

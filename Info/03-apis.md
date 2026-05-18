@@ -259,23 +259,32 @@ Nota de ownership: la Rider App no marca inicio ni fin del viaje. El ciclo de vi
 * **Quién llama a quién:** La Rider App consume este endpoint de la Payments App para poder pedir un reembolso.
 
 # C. Procesamiento de cobro al finalizar
-* **Endpoint:** `POST /api/pagos/procesar`
+* **Endpoint:** `POST /api/pagos/transacciones`
 * **Request:**
     ```json
     {
       "id_viaje": "uuid-12345",
       "id_pasajero": "pas_9qL...",
       "monto": 2550.00,
-      "tipo": "EFECTIVO" | "TARJETA"
+      "metodo_pago": "EFECTIVO" | "MERCADO_PAGO"
     }
     ```
-* **Response:**
+* **Response (EFECTIVO — síncrono):**
     ```json
     {
       "id_transaccion": "tx_98765",
-      "estado": "CAPTURED" | "PENDING"
+      "estado": "CAPTURED"
     }
     ```
+* **Response (MERCADO_PAGO — asíncrono, Checkout Pro):**
+    ```json
+    {
+      "id_transaccion": "tx_98765",
+      "init_point": "https://www.mercadopago.com.ar/checkout/...",
+      "estado": "PENDING"
+    }
+    ```
+  El pasajero debe completar el pago en la URL `init_point`. La confirmación llega mediante webhook de MP y Payments App notifica a Rider App con `POST /api/viajes/{id_viaje}/pago-confirmado` cuando el estado cambia a `CAPTURED` o `FAILED`.
 * **Quién llama a quién:** La Driver App consume este endpoint de la Payments App al momento de marcar el viaje como terminado.
 
 ---

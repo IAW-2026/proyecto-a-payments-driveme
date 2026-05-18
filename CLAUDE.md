@@ -43,18 +43,19 @@ npm run db:studio    # open Prisma Studio
 Clerk is the single identity provider across all four apps. Roles live in Clerk `publicMetadata.role`:
 
 - `rider` — passengers (can add payment methods, request refunds)
-- `driver` — drivers (triggers payment processing via `POST /api/pagos/procesar`)
+- `driver` — drivers (triggers payment processing via `POST /api/pagos/transacciones`)
 - Clerk `sub` is used as the shared user ID across all services
 
 ### Payments App endpoints (exposed to other services)
 
 | Endpoint | Caller | Description |
 |----------|--------|-------------|
-| `POST /api/pagos/procesar` | Driver App | Charge passenger at trip end; returns `id_transaccion` and `CAPTURED\|PENDING` |
+| `POST /api/pagos/transacciones` | Driver App | Charge at trip end; EFECTIVO → sync `CAPTURED`, MERCADO_PAGO → async `PENDING` + `init_point` |
 | `POST /api/pagos/methods` | Rider App | Add a payment method (tokenized by gateway) |
 | `POST /api/pagos/{id_transaccion}/refunds` | Rider App | Request a refund |
+| `POST /api/webhooks/mercadopago` | Mercado Pago | MP payment notification — updates Transaccion and fires pago-confirmado |
 
-After processing, Payments App notifies Rider App at `POST /api/viajes/{id_viaje}/pago-confirmado`.
+After EFECTIVO processing (or after MP webhook confirms), Payments App notifies Rider App at `POST /api/viajes/{id_viaje}/pago-confirmado`.
 
 ### Payments App data model
 
@@ -64,3 +65,20 @@ After processing, Payments App notifies Rider App at `POST /api/viajes/{id_viaje
 - **Reembolso**: partial or full refund linked to a Transaccion; status (`PENDING`/`COMPLETED`/`FAILED`/`REVERSED`)
 
 Raw card data is never stored — only gateway tokens and masked PANs.
+
+### Mercado Pago env vars (add to `.env.local`)
+
+| Variable | Description |
+|----------|-------------|
+| `MP_ACCESS_TOKEN` | MP access token — test credentials start with `APP_USR-` |
+| `NEXT_PUBLIC_MP_PUBLIC_KEY` | MP public key — exposed to the browser, used by `@mercadopago/sdk-react` for the Wallet Brick |
+| `MP_BACK_URL_BASE` | Public base URL of this app — used for `back_urls` and `notification_url` sent to MP |
+
+> **Important**: `MP_BACK_URL_BASE` must be a publicly accessible URL. MP **blocks localhost** for `back_urls` and `notification_url` and will show "Algo salió mal". Use the deploy URL or an ngrok tunnel (`ngrok http 3000`).
+
+Get both keys from [mercadopago.com.ar/developers](https://www.mercadopago.com.ar/developers) → Your integrations → App → Test credentials.
+
+> **SSL fix for dev server**: when running locally the server calls MP's API over HTTPS. On school networks this fails with SSL errors. Always start the server with:
+> ```powershell
+> $env:NODE_OPTIONS="--use-system-ca"; pnpm dev
+> ```

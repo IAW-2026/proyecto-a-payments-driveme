@@ -54,7 +54,7 @@ export default function TestLiquidarForm() {
     setLoading(true)
     setMsg(null)
     try {
-      const res = await fetch('/api/pagos/admin/test/liquidar', {
+      const res = await fetch('/api/pagos/admin/test/liquidaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idConductor: driverId.trim() }),

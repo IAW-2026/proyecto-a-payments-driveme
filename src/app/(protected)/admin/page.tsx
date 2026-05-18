@@ -131,13 +131,13 @@ export default async function AdminPage({
         <>
           <SectionHeader title="Test — Procesar Transacción" />
           <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Simula el flujo completo de procesamiento de un viaje (igual a <code>/api/pagos/procesar</code>). Muestra el estado de Billetera y Banco Central antes y después.
+            Simula el flujo completo de procesamiento de un viaje (igual a <code>/api/pagos/transacciones</code>). Muestra el estado de Billetera y Banco Central antes y después.
           </p>
           <TestProcesarForm />
 
           <SectionHeader title="Test — Liquidar al Conductor" />
           <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Ejecuta la liquidación semanal de un conductor (igual a <code>/api/pagos/liquidar</code>). Resetea los fondos semanales y los mueve al histórico.
+            Ejecuta la liquidación semanal de un conductor (igual a <code>/api/pagos/liquidaciones</code>). Resetea los fondos semanales y los mueve al histórico.
           </p>
           <TestLiquidarForm />
 

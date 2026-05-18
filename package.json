@@ -16,9 +16,11 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.2",
+    "@mercadopago/sdk-react": "1.0.7",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "dotenv": "^17.4.2",
+    "mercadopago": "2.12.1",
     "next": "^16.2.6",
     "pg": "^8.20.0",
     "react": "^19.0.0",
@@ -26,7 +28,13 @@
     "svix": "^1.93.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@clerk/shared", "@prisma/engines", "prisma", "sharp", "unrs-resolver"]
+    "onlyBuiltDependencies": [
+      "@clerk/shared",
+      "@prisma/engines",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.6",
