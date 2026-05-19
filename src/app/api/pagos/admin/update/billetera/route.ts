@@ -30,13 +30,10 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     item: {
-      id: b.id,
-      idConductor: b.idConductor,
-      montoSemanaActual:         Number(b.montoSemanaActual),
-      montoRetenidoSemanaActual: Number(b.montoRetenidoSemanaActual),
-      montoHistorico:            Number(b.montoHistorico),
-      montoRetenidoHistorico:    Number(b.montoRetenidoHistorico),
-      montoEfectivoPendiente:    Number(b.montoEfectivoPendiente),
+      id:             b.id,
+      idConductor:    b.idConductor,
+      montoPendiente: Number(b.montoPendiente),
+      montoLiquidado: Number(b.montoLiquidado),
     },
   })
 }
@@ -47,40 +44,21 @@ export async function PUT(req: Request) {
   const body = await req.json()
   const idConductor = clerkId(body.idConductor)
   const {
-    montoSemanaActual         = 0,
-    montoRetenidoSemanaActual = 0,
-    montoHistorico            = 0,
-    montoRetenidoHistorico    = 0,
-    montoEfectivoPendiente    = 0,
+    montoPendiente = 0,
+    montoLiquidado = 0,
   } = body
 
   if (!idConductor) return NextResponse.json({ error: 'Missing idConductor' }, { status: 400 })
 
   const b = await prisma.billetera.upsert({
     where:  { idConductor },
-    create: {
-      idConductor,
-      montoSemanaActual,
-      montoRetenidoSemanaActual,
-      montoHistorico,
-      montoRetenidoHistorico,
-      montoEfectivoPendiente,
-    },
-    update: {
-      montoSemanaActual,
-      montoRetenidoSemanaActual,
-      montoHistorico,
-      montoRetenidoHistorico,
-      montoEfectivoPendiente,
-    },
+    create: { idConductor, montoPendiente, montoLiquidado },
+    update: { montoPendiente, montoLiquidado },
   })
 
   return NextResponse.json({
-    idConductor: b.idConductor,
-    montoSemanaActual:         Number(b.montoSemanaActual),
-    montoRetenidoSemanaActual: Number(b.montoRetenidoSemanaActual),
-    montoHistorico:            Number(b.montoHistorico),
-    montoRetenidoHistorico:    Number(b.montoRetenidoHistorico),
-    montoEfectivoPendiente:    Number(b.montoEfectivoPendiente),
+    idConductor:    b.idConductor,
+    montoPendiente: Number(b.montoPendiente),
+    montoLiquidado: Number(b.montoLiquidado),
   })
 }

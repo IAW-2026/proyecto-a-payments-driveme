@@ -7,16 +7,13 @@ import { redirect } from 'next/navigation'
 import AdminNav from './AdminNav'
 import RoleForm from './RoleForm'
 import SeedTransaccionForm from './SeedTransaccionForm'
-import SeedReembolsoForm from './SeedReembolsoForm'
 import SeedBilleteraForm from './SeedBilleteraForm'
 import SeedBancoForm from './SeedBancoForm'
 import QuickPreview from './QuickPreview'
 import UpdateTransaccionForm from './UpdateTransaccionForm'
-import UpdateReembolsoForm from './UpdateReembolsoForm'
 import UpdateBilleteraForm from './UpdateBilleteraForm'
 import TestProcesarForm from './TestProcesarForm'
 import TestLiquidarForm from './TestLiquidarForm'
-import TestReembolsoForm from './TestReembolsoForm'
 
 export const metadata: Metadata = {
   title: 'Admin — DriveMe Payments',
@@ -73,12 +70,6 @@ export default async function AdminPage({
           </p>
           <SeedTransaccionForm />
 
-          <SectionHeader title="Seed — Reembolsos" />
-          <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Crea o actualiza un reembolso sobre una transacción existente. COMPLETED actualiza Billetera, Banco Central y marca la transacción como REEMBOLSADO.
-          </p>
-          <SeedReembolsoForm />
-
           <SectionHeader title="Seed — Billetera del Conductor" />
           <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
             Crea o incrementa la billetera de un conductor directamente. Los montos se suman al estado actual.
@@ -109,15 +100,9 @@ export default async function AdminPage({
 
           <SectionHeader title="Update — Transacción" />
           <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Busca una transacción por ID y cambia su estado. Cambiar a CONFIRMADO actualiza Billetera y Banco Central; cambiar a REEMBOLSADO revierte el saldo del conductor.
+            Busca una transacción por ID y cambia su estado. Cambiar a CONFIRMADO actualiza Billetera y Banco Central.
           </p>
           <UpdateTransaccionForm />
-
-          <SectionHeader title="Update — Reembolso" />
-          <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Busca un reembolso por ID y cambia su estado. Cambiar a COMPLETED aplica los efectos en Billetera, Banco Central y marca la transacción como REEMBOLSADO.
-          </p>
-          <UpdateReembolsoForm />
 
           <SectionHeader title="Update — Billetera" />
           <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
@@ -131,21 +116,15 @@ export default async function AdminPage({
         <>
           <SectionHeader title="Test — Procesar Transacción" />
           <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Simula el flujo completo de procesamiento de un viaje (igual a <code>/api/pagos/transacciones</code>). Muestra el estado de Billetera y Banco Central antes y después.
+            Simula el flujo completo de procesamiento de un viaje (igual a <code>/api/pagos/admin/test/transacciones</code>). Muestra el estado de Billetera y Banco Central antes y después.
           </p>
           <TestProcesarForm />
 
           <SectionHeader title="Test — Liquidar al Conductor" />
           <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Ejecuta la liquidación semanal de un conductor (igual a <code>/api/pagos/liquidaciones</code>). Resetea los fondos semanales y los mueve al histórico.
+            Ejecuta la liquidación de un conductor (igual a <code>/api/pagos/liquidaciones</code>). Marca todas las transacciones CONFIRMADO como LIQUIDADO y actualiza la billetera.
           </p>
           <TestLiquidarForm />
-
-          <SectionHeader title="Test — Reembolso al Pasajero" />
-          <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Procesa un reembolso sobre una transacción CONFIRMADO (igual a <code>/api/pagos/[id]/refunds</code>). El ID de pasajero debe coincidir con el de la transacción.
-          </p>
-          <TestReembolsoForm />
         </>
       )}
     </main>

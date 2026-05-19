@@ -294,7 +294,6 @@ body {
 .badge-captured  { background: rgba(0,229,180,0.15);  color: var(--accent); }
 .badge-pending   { background: rgba(240,165,0,0.15);   color: var(--gold); }
 .badge-failed    { background: rgba(255,77,109,0.15);  color: var(--danger); }
-.badge-refunded  { background: rgba(107,127,163,0.2);  color: var(--muted); }
 .badge-canceled  { background: rgba(107,127,163,0.2);  color: var(--muted); }
 .badge-abierto   { background: rgba(0,229,180,0.15);   color: var(--accent); }
 .badge-cerrado   { background: rgba(240,165,0,0.15);   color: var(--gold); }

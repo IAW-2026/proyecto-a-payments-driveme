@@ -43,10 +43,11 @@ export async function POST(req: Request) {
         idViaje,
         idPasajero,
         idConductor,
-        metodoPago:      'MERCADO_PAGO',
+        metodoPago:        'MERCADO_PAGO',
         monto,
-        estado:          'PENDIENTE',
-        gatewayProvider: 'mercadopago',
+        estado:            'PENDIENTE',
+        estadoLiquidacion: 'PENDIENTE',
+        gatewayProvider:   'mercadopago',
       },
     })
 
@@ -84,10 +85,10 @@ export async function POST(req: Request) {
       })
 
       return NextResponse.json({
-        id_transaccion: transaccion.id,
-        preference_id:  prefResponse.id,
-        init_point:     prefResponse.init_point,
-        estado:         'PENDING',
+        id_transaccion:    transaccion.id,
+        preference_id:     prefResponse.id,
+        init_point:        prefResponse.init_point,
+        estado:            'PENDING',
         billetera_antes:   null,
         billetera_despues: null,
         banco_despues:     null,
@@ -112,20 +113,18 @@ export async function POST(req: Request) {
       idViaje,
       idPasajero,
       idConductor,
-      metodoPago: 'EFECTIVO',
+      metodoPago:        'EFECTIVO',
       monto,
-      estado:     'CONFIRMADO',
+      estado:            'CONFIRMADO',
+      estadoLiquidacion: 'PENDIENTE',
     },
   })
 
   await Promise.all([
     prisma.billetera.upsert({
       where:  { idConductor },
-      create: { idConductor, montoSemanaActual: neto, montoEfectivoPendiente: corte },
-      update: {
-        montoSemanaActual:      { increment: neto },
-        montoEfectivoPendiente: { increment: corte },
-      },
+      create: { idConductor, montoPendiente: neto },
+      update: { montoPendiente: { increment: neto } },
     }),
     prisma.bancoCentral.upsert({
       where:  { id: 'main' },
@@ -144,14 +143,14 @@ export async function POST(req: Request) {
     estado: 'CAPTURED',
     billetera_antes: billetera_antes
       ? {
-          montoSemanaActual:      Number(billetera_antes.montoSemanaActual),
-          montoEfectivoPendiente: Number(billetera_antes.montoEfectivoPendiente),
+          montoPendiente: Number(billetera_antes.montoPendiente),
+          montoLiquidado: Number(billetera_antes.montoLiquidado),
         }
       : null,
     billetera_despues: billetera_despues
       ? {
-          montoSemanaActual:      Number(billetera_despues.montoSemanaActual),
-          montoEfectivoPendiente: Number(billetera_despues.montoEfectivoPendiente),
+          montoPendiente: Number(billetera_despues.montoPendiente),
+          montoLiquidado: Number(billetera_despues.montoLiquidado),
         }
       : null,
     banco_despues: banco_despues

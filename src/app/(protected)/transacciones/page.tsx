@@ -13,17 +13,14 @@ export const metadata: Metadata = {
 const PAGE_SIZE = 10
 
 const BADGE: Record<string, string> = {
-  CONFIRMADO:  'badge-captured',
-  PENDIENTE:   'badge-pending',
-  CANCELADO:   'badge-failed',
-  REEMBOLSADO: 'badge-refunded',
+  CONFIRMADO: 'badge-captured',
+  PENDIENTE:  'badge-pending',
+  CANCELADO:  'badge-failed',
 }
 
-const BADGE_R: Record<string, string> = {
-  PENDING:   'badge-pending',
-  COMPLETED: 'badge-captured',
-  FAILED:    'badge-failed',
-  REVERSED:  'badge-canceled',
+const BADGE_LIQ: Record<string, string> = {
+  PENDIENTE: 'badge-pending',
+  LIQUIDADO: 'badge-captured',
 }
 
 export default async function TransaccionesPage({
@@ -51,7 +48,6 @@ export default async function TransaccionesPage({
     }),
     prisma.transaccion.findMany({
       where: { OR: [{ idPasajero: targetId }, { idConductor: targetId }] },
-      include: { reembolsos: true },
       orderBy: { fechaCreacion: 'desc' },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -82,50 +78,36 @@ export default async function TransaccionesPage({
                   <th>Monto</th>
                   <th>Método</th>
                   <th>Estado</th>
-                  <th>Reembolsos</th>
+                  <th>Liquidación</th>
                 </tr>
               </thead>
               <tbody>
                 {txs.map((tx) => (
-                  <React.Fragment key={tx.id}>
-                    <tr>
-                      <td style={{ color: 'var(--muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                        {fmtDate(tx.fechaCreacion)}
-                      </td>
-                      <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)' }}>
-                        {tx.idViaje.slice(0, 8)}…
-                      </td>
-                      <td style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-                        {tx.idPasajero === targetId ? 'Pasajero' : 'Conductor'}
-                      </td>
-                      <td style={{ fontWeight: 600 }}>
-                        ${Number(tx.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })} {tx.moneda}
-                      </td>
-                      <td>
-                        <span style={{ fontSize: '0.8rem', color: tx.metodoPago === 'MERCADO_PAGO' ? 'var(--accent)' : 'var(--muted)' }}>
-                          {tx.metodoPago === 'MERCADO_PAGO' ? 'Mercado Pago' : 'Efectivo'}
-                        </span>
-                      </td>
-                      <td><span className={`badge ${BADGE[tx.estado] ?? 'badge-pending'}`}>{tx.estado}</span></td>
-                      <td style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{tx.reembolsos.length || '—'}</td>
-                    </tr>
-
-                    {tx.reembolsos.map((r) => (
-                      <tr key={r.id} style={{ background: 'rgba(255,255,255,0.02)' }}>
-                        <td colSpan={2} style={{ paddingLeft: '2rem', fontSize: '0.75rem', color: 'var(--muted)' }}>
-                          ↳ Reembolso · {fmtDate(r.fechaSolicitud)}
-                        </td>
-                        <td colSpan={2} style={{ fontSize: '0.75rem' }}>
-                          ${Number(r.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td style={{ fontSize: '0.75rem', color: 'var(--muted)' }} colSpan={1}>
-                          {r.razon}
-                        </td>
-                        <td><span className={`badge ${BADGE_R[r.estado] ?? 'badge-pending'}`} style={{ fontSize: '0.7rem' }}>{r.estado}</span></td>
-                        <td />
-                      </tr>
-                    ))}
-                  </React.Fragment>
+                  <tr key={tx.id}>
+                    <td style={{ color: 'var(--muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                      {fmtDate(tx.fechaCreacion)}
+                    </td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                      {tx.idViaje.slice(0, 8)}…
+                    </td>
+                    <td style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+                      {tx.idPasajero === targetId ? 'Pasajero' : 'Conductor'}
+                    </td>
+                    <td style={{ fontWeight: 600 }}>
+                      ${Number(tx.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })} {tx.moneda}
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.8rem', color: tx.metodoPago === 'MERCADO_PAGO' ? 'var(--accent)' : 'var(--muted)' }}>
+                        {tx.metodoPago === 'MERCADO_PAGO' ? 'Mercado Pago' : 'Efectivo'}
+                      </span>
+                    </td>
+                    <td><span className={`badge ${BADGE[tx.estado] ?? 'badge-pending'}`}>{tx.estado}</span></td>
+                    <td>
+                      <span className={`badge ${BADGE_LIQ[tx.estadoLiquidacion] ?? 'badge-pending'}`} style={{ fontSize: '0.7rem' }}>
+                        {tx.estadoLiquidacion}
+                      </span>
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>

@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth'
 import { getUserRole, Rol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 
-const ESTADOS_VALIDOS = ['PENDIENTE', 'CONFIRMADO', 'CANCELADO', 'REEMBOLSADO']
+const ESTADOS_VALIDOS = ['PENDIENTE', 'CONFIRMADO', 'CANCELADO']
 const CORTE = 0.10
 const NETO  = 0.90
 
@@ -43,6 +43,7 @@ export async function POST(req: Request) {
       monto,
       moneda,
       estado: estado as any,
+      estadoLiquidacion: 'PENDIENTE',
       gatewayProvider: 'seed',
       gatewayTransactionId: crypto.randomUUID(),
       detalleGateway: { seeded: true, ts: new Date().toISOString() },
@@ -60,15 +61,11 @@ export async function POST(req: Request) {
   if (estado === 'CONFIRMADO') {
     const neto  = monto * NETO
     const corte = monto * CORTE
-    const esEfectivo = metodoPago === 'EFECTIVO'
     await Promise.all([
       prisma.billetera.upsert({
         where:  { idConductor },
-        create: { idConductor, montoSemanaActual: neto, montoEfectivoPendiente: esEfectivo ? corte : 0 },
-        update: {
-          montoSemanaActual:      { increment: neto },
-          ...(esEfectivo && { montoEfectivoPendiente: { increment: corte } }),
-        },
+        create: { idConductor, montoPendiente: neto },
+        update: { montoPendiente: { increment: neto } },
       }),
       prisma.bancoCentral.upsert({
         where:  { id: 'main' },

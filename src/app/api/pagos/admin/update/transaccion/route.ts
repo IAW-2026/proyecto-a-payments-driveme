@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth'
 import { getUserRole, Rol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 
-const ESTADOS_VALIDOS = ['PENDIENTE', 'CONFIRMADO', 'CANCELADO', 'REEMBOLSADO']
+const ESTADOS_VALIDOS = ['PENDIENTE', 'CONFIRMADO', 'CANCELADO']
 const CORTE = 0.10
 const NETO  = 0.90
 
@@ -25,14 +25,15 @@ export async function GET(req: Request) {
   if (!tx) return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
 
   return NextResponse.json({
-    id: tx.id,
-    idViaje: tx.idViaje,
-    idConductor: tx.idConductor,
-    idPasajero: tx.idPasajero,
-    metodoPago: tx.metodoPago,
-    monto: Number(tx.monto),
-    moneda: tx.moneda,
-    estado: tx.estado,
+    id:                tx.id,
+    idViaje:           tx.idViaje,
+    idConductor:       tx.idConductor,
+    idPasajero:        tx.idPasajero,
+    metodoPago:        tx.metodoPago,
+    monto:             Number(tx.monto),
+    moneda:            tx.moneda,
+    estado:            tx.estado,
+    estadoLiquidacion: tx.estadoLiquidacion,
   })
 }
 
@@ -51,43 +52,22 @@ export async function PATCH(req: Request) {
 
   const oldEstado = tx.estado
   const monto = Number(tx.monto)
-  const esEfectivo = tx.metodoPago === 'EFECTIVO'
 
   await prisma.transaccion.update({ where: { id }, data: { estado: estado as any } })
 
   if (estado === 'CONFIRMADO' && oldEstado !== 'CONFIRMADO') {
-    const neto = monto * NETO
+    const neto  = monto * NETO
     const corte = monto * CORTE
     await Promise.all([
       prisma.billetera.upsert({
         where:  { idConductor: tx.idConductor },
-        create: { idConductor: tx.idConductor, montoSemanaActual: neto, montoEfectivoPendiente: esEfectivo ? corte : 0 },
-        update: {
-          montoSemanaActual: { increment: neto },
-          ...(esEfectivo && { montoEfectivoPendiente: { increment: corte } }),
-        },
+        create: { idConductor: tx.idConductor, montoPendiente: neto },
+        update: { montoPendiente: { increment: neto } },
       }),
       prisma.bancoCentral.upsert({
         where:  { id: 'main' },
         create: { id: 'main', fondosADebitar: neto, fondosEmpresa: corte },
         update: { fondosADebitar: { increment: neto }, fondosEmpresa: { increment: corte } },
-      }),
-    ])
-  }
-
-  if (estado === 'REEMBOLSADO' && oldEstado === 'CONFIRMADO') {
-    const neto = monto * NETO
-    await Promise.all([
-      prisma.billetera.update({
-        where: { idConductor: tx.idConductor },
-        data: {
-          montoSemanaActual:         { decrement: neto },
-          montoRetenidoSemanaActual: { increment: neto },
-        },
-      }),
-      prisma.bancoCentral.update({
-        where: { id: 'main' },
-        data:  { fondosReembolsadosHistorico: { increment: neto } },
       }),
     ])
   }

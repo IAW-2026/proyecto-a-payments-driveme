@@ -40,14 +40,14 @@ export async function POST(req: Request) {
       prisma.transaccion.update({
         where: { id: id_transaccion },
         data: {
-          estado:          "CONFIRMADO",
-          detalleGateway:  { payment_id: paymentId, status: paymentData.status },
+          estado:         "CONFIRMADO",
+          detalleGateway: { payment_id: paymentId, status: paymentData.status },
         },
       }),
       prisma.billetera.upsert({
         where:  { idConductor: transaccion.idConductor },
-        create: { idConductor: transaccion.idConductor, montoSemanaActual: neto },
-        update: { montoSemanaActual: { increment: neto } },
+        create: { idConductor: transaccion.idConductor, montoPendiente: neto },
+        update: { montoPendiente: { increment: neto } },
       }),
       prisma.bancoCentral.upsert({
         where:  { id: "main" },
@@ -64,11 +64,7 @@ export async function POST(req: Request) {
       fetch(`${riderUrl}/api/viajes/${transaccion.idViaje}/pago-confirmado`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          id_transaccion,
-          estado: "CAPTURED",
-          monto,
-        }),
+        body:    JSON.stringify({ id_transaccion, estado: "CAPTURED", monto }),
       }).catch(() => {});
     }
   } else if (paymentData.status === "rejected" || paymentData.status === "cancelled") {

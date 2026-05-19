@@ -31,8 +31,8 @@ type Result = {
   estado: 'CAPTURED' | 'FAILED' | 'PENDING'
   preference_id?: string
   init_point?: string
-  billetera_antes: { montoSemanaActual: number; montoEfectivoPendiente: number } | null
-  billetera_despues: { montoSemanaActual: number; montoEfectivoPendiente: number } | null
+  billetera_antes: { montoPendiente: number; montoLiquidado: number } | null
+  billetera_despues: { montoPendiente: number; montoLiquidado: number } | null
   banco_despues: { fondosADebitar: number; fondosEmpresa: number } | null
 }
 
@@ -139,21 +139,18 @@ export default function TestProcesarForm() {
               <p style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>Billetera del conductor</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.82rem' }}>
                 <div>
-                  <p style={{ color: 'var(--muted)' }}>Semana actual</p>
+                  <p style={{ color: 'var(--muted)' }}>Pendiente de liquidar</p>
                   <p style={{ fontWeight: 600, color: 'var(--accent)' }}>
-                    {fmt(result.billetera_despues.montoSemanaActual)}
-                    {delta(result.billetera_antes?.montoSemanaActual, result.billetera_despues.montoSemanaActual)}
+                    {fmt(result.billetera_despues.montoPendiente)}
+                    {delta(result.billetera_antes?.montoPendiente, result.billetera_despues.montoPendiente)}
                   </p>
                 </div>
-                {metodoPago === 'EFECTIVO' && (
-                  <div>
-                    <p style={{ color: 'var(--muted)' }}>Efectivo pendiente</p>
-                    <p style={{ fontWeight: 600, color: 'var(--gold)' }}>
-                      {fmt(result.billetera_despues.montoEfectivoPendiente)}
-                      {delta(result.billetera_antes?.montoEfectivoPendiente, result.billetera_despues.montoEfectivoPendiente)}
-                    </p>
-                  </div>
-                )}
+                <div>
+                  <p style={{ color: 'var(--muted)' }}>Liquidado histórico</p>
+                  <p style={{ fontWeight: 600, color: 'var(--muted)' }}>
+                    {fmt(result.billetera_despues.montoLiquidado)}
+                  </p>
+                </div>
               </div>
             </div>
           )}

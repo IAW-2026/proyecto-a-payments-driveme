@@ -21,20 +21,18 @@ export async function POST(req: Request) {
 
   const body = await req.json()
   const {
-    fondosEmpresa               = 0,
-    fondosADebitar              = 0,
-    fondosDebitadosHistorico    = 0,
-    fondosReembolsadosHistorico = 0,
+    fondosEmpresa            = 0,
+    fondosADebitar           = 0,
+    fondosDebitadosHistorico = 0,
   } = body
 
   const banco = await prisma.bancoCentral.upsert({
     where:  { id: 'main' },
-    create: { id: 'main', fondosEmpresa, fondosADebitar, fondosDebitadosHistorico, fondosReembolsadosHistorico },
+    create: { id: 'main', fondosEmpresa, fondosADebitar, fondosDebitadosHistorico },
     update: {
-      fondosEmpresa:               { increment: fondosEmpresa },
-      fondosADebitar:              { increment: fondosADebitar },
-      fondosDebitadosHistorico:    { increment: fondosDebitadosHistorico },
-      fondosReembolsadosHistorico: { increment: fondosReembolsadosHistorico },
+      fondosEmpresa:            { increment: fondosEmpresa },
+      fondosADebitar:           { increment: fondosADebitar },
+      fondosDebitadosHistorico: { increment: fondosDebitadosHistorico },
     },
   })
 

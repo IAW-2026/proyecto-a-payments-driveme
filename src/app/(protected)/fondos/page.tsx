@@ -65,10 +65,6 @@ export default async function PanelFinancieroPage({
               <p className="balance-label">Debitados histórico</p>
               <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--muted)', marginTop: '0.25rem' }}>{fmt(Number(banco.fondosDebitadosHistorico))}</p>
             </div>
-            <div>
-              <p className="balance-label">Reembolsados histórico</p>
-              <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger)', marginTop: '0.25rem' }}>{fmt(Number(banco.fondosReembolsadosHistorico))}</p>
-            </div>
           </div>
         ) : (
           <div className="empty-state" style={{ padding: '1rem 0' }}>
@@ -89,31 +85,15 @@ export default async function PanelFinancieroPage({
           <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
             {billetera ? (
               <>
-                <p className="balance-label">Saldo neto esta semana</p>
+                <p className="balance-label">Pendiente de liquidar</p>
                 <p className="balance-amount">
-                  {fmt(Number(billetera.montoSemanaActual) - Number(billetera.montoRetenidoSemanaActual))}
+                  {fmt(Number(billetera.montoPendiente))}
                 </p>
 
                 <div style={{ display: 'flex', gap: '2.5rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
                   <div>
-                    <p className="balance-label">Semana actual (bruto)</p>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--accent)' }}>{fmt(Number(billetera.montoSemanaActual))}</p>
-                  </div>
-                  <div>
-                    <p className="balance-label">Retenido semana</p>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--danger)' }}>-{fmt(Number(billetera.montoRetenidoSemanaActual))}</p>
-                  </div>
-                  <div>
-                    <p className="balance-label">Histórico acumulado</p>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--muted)' }}>{fmt(Number(billetera.montoHistorico))}</p>
-                  </div>
-                  <div>
-                    <p className="balance-label">Histór. retenido</p>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--muted)' }}>{fmt(Number(billetera.montoRetenidoHistorico))}</p>
-                  </div>
-                  <div>
-                    <p className="balance-label">Efectivo pendiente (10%)</p>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--gold)' }}>{fmt(Number(billetera.montoEfectivoPendiente))}</p>
+                    <p className="balance-label">Monto liquidado histórico</p>
+                    <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--muted)' }}>{fmt(Number(billetera.montoLiquidado))}</p>
                   </div>
                 </div>
               </>

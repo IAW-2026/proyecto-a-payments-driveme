@@ -5,10 +5,9 @@ import { useState } from 'react'
 type PreviewType = 'transacciones' | 'billetera'
 
 const BADGE: Record<string, string> = {
-  CONFIRMADO:  'badge-captured',
-  PENDIENTE:   'badge-pending',
-  CANCELADO:   'badge-failed',
-  REEMBOLSADO: 'badge-refunded',
+  CONFIRMADO: 'badge-captured',
+  PENDIENTE:  'badge-pending',
+  CANCELADO:  'badge-failed',
 }
 
 function fmt(val: string | number) {
@@ -93,14 +92,11 @@ export default function QuickPreview({ type }: { type: PreviewType }) {
           {!isTx && data && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.82rem' }}>
               {[
-                ['Semana actual',      data.montoSemanaActual],
-                ['Retenido semana',    data.montoRetenidoSemanaActual],
-                ['Histórico',          data.montoHistorico],
-                ['Histór. retenido',   data.montoRetenidoHistorico],
-                ['Efectivo pendiente', data.montoEfectivoPendiente],
-              ].map(([label, val]) => (
-                <div key={String(label)}>
-                  <p style={{ color: 'var(--muted)', marginBottom: '0.1rem' }}>{label}</p>
+                ['Pendiente de liquidar', data.montoPendiente],
+                ['Liquidado histórico',   data.montoLiquidado],
+              ].map(([lbl, val]) => (
+                <div key={String(lbl)}>
+                  <p style={{ color: 'var(--muted)', marginBottom: '0.1rem' }}>{lbl}</p>
                   <p style={{ fontWeight: 600, color: 'var(--accent)' }}>{fmt(Number(val ?? 0))}</p>
                 </div>
               ))}

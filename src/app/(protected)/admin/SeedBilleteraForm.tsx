@@ -3,14 +3,11 @@
 import { useState } from 'react'
 
 export default function SeedBilleteraForm() {
-  const [idConductor, setIdConductor]                         = useState('')
-  const [montoSemanaActual, setMontoSemanaActual]             = useState('0')
-  const [montoRetenidoSemanaActual, setMontoRetenidoSemana]   = useState('0')
-  const [montoHistorico, setMontoHistorico]                   = useState('0')
-  const [montoRetenidoHistorico, setMontoRetenidoHistorico]   = useState('0')
-  const [montoEfectivoPendiente, setMontoEfectivoPendiente]   = useState('0')
-  const [loading, setLoading]                                 = useState(false)
-  const [msg, setMsg]                                         = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [idConductor, setIdConductor]       = useState('')
+  const [montoPendiente, setMontoPendiente] = useState('0')
+  const [montoLiquidado, setMontoLiquidado] = useState('0')
+  const [loading, setLoading]               = useState(false)
+  const [msg, setMsg]                       = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()
@@ -22,16 +19,13 @@ export default function SeedBilleteraForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           idConductor,
-          montoSemanaActual:         Number(montoSemanaActual),
-          montoRetenidoSemanaActual: Number(montoRetenidoSemanaActual),
-          montoHistorico:            Number(montoHistorico),
-          montoRetenidoHistorico:    Number(montoRetenidoHistorico),
-          montoEfectivoPendiente:    Number(montoEfectivoPendiente),
+          montoPendiente: Number(montoPendiente),
+          montoLiquidado: Number(montoLiquidado),
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Error al crear billetera')
-      setMsg({ type: 'success', text: `Billetera creada/actualizada: ${data.id} · Semana: $${Number(data.montoSemanaActual).toFixed(2)}` })
+      setMsg({ type: 'success', text: `Billetera creada/actualizada: ${data.id} · Pendiente: $${Number(data.montoPendiente).toFixed(2)}` })
     } catch (err: any) {
       setMsg({ type: 'error', text: err.message })
     } finally {
@@ -49,32 +43,14 @@ export default function SeedBilleteraForm() {
           </label>
         </div>
 
-        <div className="field-group" style={{ marginBottom: '1rem' }}>
+        <div className="field-group" style={{ marginBottom: '1.5rem' }}>
           <label>
-            Monto semana actual
-            <input type="number" min="0" step="0.01" value={montoSemanaActual} onChange={e => setMontoSemanaActual(e.target.value)} />
+            Monto pendiente de liquidar
+            <input type="number" min="0" step="0.01" value={montoPendiente} onChange={e => setMontoPendiente(e.target.value)} />
           </label>
           <label>
-            Retenido semana actual
-            <input type="number" min="0" step="0.01" value={montoRetenidoSemanaActual} onChange={e => setMontoRetenidoSemana(e.target.value)} />
-          </label>
-        </div>
-
-        <div className="field-group" style={{ marginBottom: '1rem' }}>
-          <label>
-            Histórico acumulado
-            <input type="number" min="0" step="0.01" value={montoHistorico} onChange={e => setMontoHistorico(e.target.value)} />
-          </label>
-          <label>
-            Histórico retenido
-            <input type="number" min="0" step="0.01" value={montoRetenidoHistorico} onChange={e => setMontoRetenidoHistorico(e.target.value)} />
-          </label>
-        </div>
-
-        <div className="field-group single" style={{ marginBottom: '1.5rem' }}>
-          <label>
-            Efectivo pendiente (10% adeudado)
-            <input type="number" min="0" step="0.01" value={montoEfectivoPendiente} onChange={e => setMontoEfectivoPendiente(e.target.value)} />
+            Monto liquidado histórico
+            <input type="number" min="0" step="0.01" value={montoLiquidado} onChange={e => setMontoLiquidado(e.target.value)} />
           </label>
         </div>
 

@@ -12,13 +12,13 @@ const FEATURES = [
   {
     icon: '📊',
     title: 'Transacciones',
-    desc: 'Consultá el historial de transacciones de cualquier usuario registrado. Incluye detalle de reembolsos.',
+    desc: 'Consultá el historial de transacciones de cualquier usuario registrado. Incluye estado de liquidación.',
     href: '/transacciones',
   },
   {
     icon: '🏦',
     title: 'Panel Financiero',
-    desc: 'Revisá la billetera de conductores, retenciones, liquidaciones e histórico del Banco Central.',
+    desc: 'Revisá la billetera de conductores, liquidaciones e histórico del Banco Central.',
     href: '/fondos',
   },
 ]

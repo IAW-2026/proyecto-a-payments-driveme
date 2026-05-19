@@ -14,7 +14,7 @@ export default function TransaccionesLoading() {
         <table className="data-table">
           <thead>
             <tr>
-              {['Fecha', 'Viaje', 'Rol', 'Monto', 'Método', 'Estado', 'Reembolsos'].map((h) => (
+              {['Fecha', 'Viaje', 'Rol', 'Monto', 'Método', 'Estado', 'Liquidación'].map((h) => (
                 <th key={h}>{h}</th>
               ))}
             </tr>

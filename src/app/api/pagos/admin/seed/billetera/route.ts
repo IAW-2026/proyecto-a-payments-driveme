@@ -20,11 +20,8 @@ export async function POST(req: Request) {
   const body = await req.json()
   const idConductor = clerkId(body.idConductor)
   const {
-    montoSemanaActual         = 0,
-    montoRetenidoSemanaActual = 0,
-    montoHistorico            = 0,
-    montoRetenidoHistorico    = 0,
-    montoEfectivoPendiente    = 0,
+    montoPendiente = 0,
+    montoLiquidado = 0,
   } = body
 
   if (!idConductor)
@@ -32,20 +29,10 @@ export async function POST(req: Request) {
 
   const billetera = await prisma.billetera.upsert({
     where:  { idConductor },
-    create: {
-      idConductor,
-      montoSemanaActual,
-      montoRetenidoSemanaActual,
-      montoHistorico,
-      montoRetenidoHistorico,
-      montoEfectivoPendiente,
-    },
+    create: { idConductor, montoPendiente, montoLiquidado },
     update: {
-      montoSemanaActual:         { increment: montoSemanaActual },
-      montoRetenidoSemanaActual: { increment: montoRetenidoSemanaActual },
-      montoHistorico:            { increment: montoHistorico },
-      montoRetenidoHistorico:    { increment: montoRetenidoHistorico },
-      montoEfectivoPendiente:    { increment: montoEfectivoPendiente },
+      montoPendiente: { increment: montoPendiente },
+      montoLiquidado: { increment: montoLiquidado },
     },
   })
 

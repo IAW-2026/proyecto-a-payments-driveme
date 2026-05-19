@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 
-const ESTADOS = ['PENDIENTE', 'CONFIRMADO', 'CANCELADO', 'REEMBOLSADO']
+const ESTADOS = ['PENDIENTE', 'CONFIRMADO', 'CANCELADO']
 
 const BADGE: Record<string, string> = {
-  CONFIRMADO:  'badge-captured',
-  PENDIENTE:   'badge-pending',
-  CANCELADO:   'badge-failed',
-  REEMBOLSADO: 'badge-refunded',
+  CONFIRMADO: 'badge-captured',
+  PENDIENTE:  'badge-pending',
+  CANCELADO:  'badge-failed',
 }
 
 type TxInfo = {
@@ -20,6 +19,7 @@ type TxInfo = {
   monto: number
   moneda: string
   estado: string
+  estadoLiquidacion: string
 }
 
 export default function UpdateTransaccionForm() {
@@ -116,6 +116,10 @@ export default function UpdateTransaccionForm() {
             <div>
               <p style={{ color: 'var(--muted)' }}>Estado actual</p>
               <span className={`badge ${BADGE[tx.estado] ?? 'badge-pending'}`}>{tx.estado}</span>
+            </div>
+            <div>
+              <p style={{ color: 'var(--muted)' }}>Liquidación</p>
+              <span className={`badge ${tx.estadoLiquidacion === 'LIQUIDADO' ? 'badge-captured' : 'badge-pending'}`} style={{ fontSize: '0.7rem' }}>{tx.estadoLiquidacion}</span>
             </div>
           </div>
 
