@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { getUserRole, Rol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
+import { validateAdmin } from '@/lib/validators'
 
 function clerkId(v: unknown): string {
   if (v && typeof v === 'object' && 'id' in v) return String((v as any).id)
@@ -11,15 +10,8 @@ function clerkId(v: unknown): string {
   return String(v ?? '')
 }
 
-async function adminGuard() {
-  const { userId } = await auth()
-  if (!userId) return null
-  if ((await getUserRole(userId)) !== Rol.ADMIN) return null
-  return userId
-}
-
 export async function GET(req: Request) {
-  if (!(await adminGuard())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await validateAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const idConductor = clerkId(searchParams.get('idConductor'))
@@ -39,7 +31,7 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  if (!(await adminGuard())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await validateAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
   const idConductor = clerkId(body.idConductor)

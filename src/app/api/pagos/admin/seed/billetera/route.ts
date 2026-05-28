@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { getUserRole, Rol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
+import { validateAdmin } from '@/lib/validators'
 
 function clerkId(v: unknown): string {
   if (v && typeof v === 'object' && 'id' in v) return String((v as any).id)
@@ -12,10 +11,7 @@ function clerkId(v: unknown): string {
 }
 
 export async function POST(req: Request) {
-  const { userId: callerId } = await auth()
-  if (!callerId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if ((await getUserRole(callerId)) !== Rol.ADMIN)
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!(await validateAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
   const idConductor = clerkId(body.idConductor)

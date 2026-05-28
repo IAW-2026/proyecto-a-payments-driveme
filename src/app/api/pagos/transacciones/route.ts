@@ -1,26 +1,19 @@
 import { NextResponse } from "next/server";
 import { Preference } from "mercadopago";
-import { auth } from "@/lib/auth";
-import { getUserRole, Rol } from "@/lib/roles";
+import { Rol } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { mpClient } from "@/lib/mercadopago";
 import { validateServiceToken } from "@/lib/service-auth";
+import { validateAdmin, resolveCallerUser } from "@/lib/validators";
 
 const CORTE = 0.10;
 const NETO  = 0.90;
-
-async function isAdminCaller(): Promise<boolean> {
-  const { userId } = await auth();
-  if (!userId) return false;
-  const rol = await getUserRole(userId);
-  return rol === Rol.ADMIN;
-}
 
 // POST — rider service creates the transaction when a trip is confirmed
 // Also accepts admin JWT for testing from the Debug panel
 export async function POST(req: Request) {
   const isRiderService = validateServiceToken(req, "RIDER_SERVICE_SECRET");
-  if (!isRiderService && !(await isAdminCaller())) {
+  if (!isRiderService && !(await validateAdmin(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -54,7 +47,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const isDriverService = validateServiceToken(req, "DRIVER_SERVICE_SECRET");
   const isRiderService  = validateServiceToken(req, "RIDER_SERVICE_SECRET");
-  const adminCalling    = !isDriverService && !isRiderService ? await isAdminCaller() : false;
+  const adminCalling    = !isDriverService && !isRiderService ? await validateAdmin(req) : null;
 
   if (!isDriverService && !isRiderService && !adminCalling) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -179,17 +172,14 @@ export async function PUT(req: Request) {
 // Called by driver/rider apps forwarding the user's Clerk JWT
 // RIDER response omits estadoLiquidacion (not relevant to passengers)
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const rol = await getUserRole(userId);
-  if (!rol) return NextResponse.json({ error: "User not registered" }, { status: 403 });
+  const caller = await resolveCallerUser(req);
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
 
-  if (rol === Rol.DRIVER) {
+  if (caller.rol === Rol.DRIVER) {
     const estadoLiquidacion = searchParams.get("estado_liquidacion");
-    const where: Record<string, unknown> = { idConductor: userId };
+    const where: Record<string, unknown> = { idConductor: caller.id };
     if (estadoLiquidacion === "PENDIENTE" || estadoLiquidacion === "LIQUIDADO") {
       where.estadoLiquidacion = estadoLiquidacion;
     }
@@ -200,16 +190,16 @@ export async function GET(req: Request) {
     return NextResponse.json(transacciones);
   }
 
-  if (rol === Rol.RIDER) {
+  if (caller.rol === Rol.RIDER) {
     const transacciones = await prisma.transaccion.findMany({
-      where:   { idPasajero: userId },
+      where:   { idPasajero: caller.id },
       orderBy: { fechaCreacion: "desc" },
       omit:    { estadoLiquidacion: true },
     });
     return NextResponse.json(transacciones);
   }
 
-  if (rol === Rol.ADMIN) {
+  if (caller.rol === Rol.ADMIN) {
     const targetUserId = searchParams.get("userId");
     const rolFiltro    = searchParams.get("rol"); // "conductor" | "pasajero"
 

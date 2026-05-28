@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-import { auth, clerkClient } from '@/lib/auth'
-import { getUserRole, Rol } from '@/lib/roles'
+import { clerkClient } from '@/lib/auth'
+import { Rol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
+import { validateAdmin } from '@/lib/validators'
 
 const ALLOWED: Rol[] = [Rol.DRIVER, Rol.RIDER, Rol.ADMIN]
 
@@ -9,11 +10,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
-  const { userId: callerId } = await auth()
-  if (!callerId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const callerRol = await getUserRole(callerId)
-  if (callerRol !== Rol.ADMIN) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!(await validateAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { userId } = await params
   const body = await req.json()
@@ -23,16 +20,23 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
   }
 
-  await Promise.all([
-    (await clerkClient()).users.updateUserMetadata(userId, {
-      publicMetadata: { role: rol.toLowerCase() },
-    }),
+  const ops: Promise<unknown>[] = [
     prisma.usuario.upsert({
       where:  { id: userId },
       create: { id: userId, rol },
       update: { rol },
     }),
-  ])
+  ]
+
+  if (!userId.startsWith('user_dev_')) {
+    ops.push(
+      (await clerkClient()).users.updateUserMetadata(userId, {
+        publicMetadata: { role: rol.toLowerCase() },
+      })
+    )
+  }
+
+  await Promise.all(ops)
 
   return NextResponse.json({ userId, rol })
 }

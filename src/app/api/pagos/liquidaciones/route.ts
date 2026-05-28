@@ -1,31 +1,19 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { getUserRole, Rol } from "@/lib/roles";
+import { Rol } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
+import { validateDriver, resolveCallerUser } from "@/lib/validators";
 
 const NETO = 0.90;
 
-async function resolveDriverId(userId: string, rol: Rol, searchParams: URLSearchParams): Promise<string | null> {
-  if (rol === Rol.ADMIN) {
-    return searchParams.get("idConductor") ?? userId;
-  }
-  return userId;
-}
-
 // POST — driver (or admin) triggers liquidation of all pending confirmed transactions
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const caller = await validateDriver(req);
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const rol = await getUserRole(userId);
-  if (rol !== Rol.DRIVER && rol !== Rol.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  let idConductor = userId;
-  if (rol === Rol.ADMIN) {
+  let idConductor = caller.id;
+  if (caller.rol === Rol.ADMIN) {
     const body = await req.json().catch(() => ({}));
-    idConductor = body.id_conductor ?? userId;
+    idConductor = body.id_conductor ?? caller.id;
   }
 
   const pendientes = await prisma.transaccion.findMany({
@@ -84,16 +72,13 @@ export async function POST(req: Request) {
 
 // GET — returns billetera summary and liquidation history for a driver
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const rol = await getUserRole(userId);
-  if (rol !== Rol.DRIVER && rol !== Rol.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const caller = await validateDriver(req);
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const idConductor = await resolveDriverId(userId, rol as Rol, searchParams);
+  const idConductor = caller.rol === Rol.ADMIN
+    ? (searchParams.get("idConductor") ?? caller.id)
+    : caller.id;
   if (!idConductor) return NextResponse.json({ error: "Missing idConductor" }, { status: 400 });
 
   const [billetera, liquidaciones] = await Promise.all([

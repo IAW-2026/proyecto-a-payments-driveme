@@ -1,25 +1,18 @@
 import { NextResponse } from "next/server";
 import { Preference } from "mercadopago";
-import { auth } from "@/lib/auth";
-import { getUserRole, Rol } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { mpClient } from "@/lib/mercadopago";
+import { validateAdmin } from "@/lib/validators";
 
 const CORTE = 0.10;
 const NETO  = 0.90;
-
-async function adminGuard() {
-  const { userId } = await auth();
-  if (!userId) return false;
-  return (await getUserRole(userId)) === Rol.ADMIN;
-}
 
 // POST — simulates what the Rider App sends to POST /api/pagos/transacciones
 // Auth: admin Clerk session. Internally uses the same logic as the production endpoint.
 // For the defense: "seleccionar esta acción ejecuta exactamente lo que envía la Rider App,
 // usando RIDER_SERVICE_SECRET como contexto de autenticación del servicio."
 export async function POST(req: Request) {
-  if (!(await adminGuard())) {
+  if (!(await validateAdmin(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -53,7 +46,7 @@ export async function POST(req: Request) {
 // For the defense: "seleccionar DRIVER ejecuta lo mismo que haría la Driver App con
 // DRIVER_SERVICE_SECRET; seleccionar RIDER lo mismo que la Rider App con RIDER_SERVICE_SECRET."
 export async function PUT(req: Request) {
-  if (!(await adminGuard())) {
+  if (!(await validateAdmin(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

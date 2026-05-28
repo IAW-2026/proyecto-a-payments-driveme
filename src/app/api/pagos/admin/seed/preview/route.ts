@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { getUserRole, Rol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
+import { validateAdmin } from '@/lib/validators'
 
 export async function GET(req: Request) {
-  const { userId: callerId } = await auth()
-  if (!callerId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if ((await getUserRole(callerId)) !== Rol.ADMIN)
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!(await validateAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const type     = searchParams.get('type')

@@ -1,48 +1,121 @@
 {
-  "_description": "Test baseline — DriveMe Payments. Reemplazá los IDs con Clerk IDs reales antes de usar.",
+  "_description": "Test baseline — DriveMe Payments. IDs follow the user_dev_ prefix convention and are recognised by user-resolver.ts in non-production environments.",
+  "usuarios": [
+    { "id": "user_dev_admin1",  "rol": "ADMIN",  "displayName": "Admin Dev",     "email": "admin@driveme.dev" },
+    { "id": "user_dev_driver1", "rol": "DRIVER", "displayName": "Carlos Gómez",  "email": "carlos@driveme.dev" },
+    { "id": "user_dev_driver2", "rol": "DRIVER", "displayName": "Ana Martínez",  "email": "ana@driveme.dev" },
+    { "id": "user_dev_driver3", "rol": "DRIVER", "displayName": "Lucas Pérez",   "email": "lucas@driveme.dev" },
+    { "id": "user_dev_rider1",  "rol": "RIDER",  "displayName": "María García",  "email": "maria@driveme.dev" },
+    { "id": "user_dev_rider2",  "rol": "RIDER",  "displayName": "Diego López",   "email": "diego@driveme.dev" }
+  ],
   "bancoCentral": {
-    "fondosEmpresa": 0,
-    "fondosADebitar": 0,
-    "fondosDebitadosHistorico": 0
+    "fondosEmpresa": 1400,
+    "fondosADebitar": 6030,
+    "fondosDebitadosHistorico": 6570
   },
   "billeteras": [
-    {
-      "idConductor": "user_REPLACE_CONDUCTOR",
-      "montoPendiente": 0,
-      "montoLiquidado": 0
-    }
+    { "idConductor": "user_dev_driver1", "montoPendiente": 1080, "montoLiquidado": 1620 },
+    { "idConductor": "user_dev_driver2", "montoPendiente": 4950, "montoLiquidado": 0    },
+    { "idConductor": "user_dev_driver3", "montoPendiente": 0,    "montoLiquidado": 4950 }
   ],
   "transacciones": [
     {
-      "idViaje": "viaje-seed-001",
-      "idPasajero": "user_REPLACE_PASAJERO",
-      "idConductor": "user_REPLACE_CONDUCTOR",
-      "metodoPago": "EFECTIVO",
-      "monto": 1000.00,
-      "moneda": "ARS",
-      "estado": "CONFIRMADO",
+      "idViaje":           "viaje-dev-001",
+      "idPasajero":        "user_dev_rider1",
+      "idConductor":       "user_dev_driver1",
+      "metodoPago":        "EFECTIVO",
+      "monto":             1200.00,
+      "moneda":            "ARS",
+      "estado":            "CONFIRMADO",
       "estadoLiquidacion": "PENDIENTE"
     },
     {
-      "idViaje": "viaje-seed-002",
-      "idPasajero": "user_REPLACE_PASAJERO",
-      "idConductor": "user_REPLACE_CONDUCTOR",
-      "metodoPago": "EFECTIVO",
-      "monto": 2500.00,
-      "moneda": "ARS",
-      "estado": "CONFIRMADO",
+      "idViaje":           "viaje-dev-002",
+      "idPasajero":        "user_dev_rider1",
+      "idConductor":       "user_dev_driver1",
+      "metodoPago":        "EFECTIVO",
+      "monto":             1800.00,
+      "moneda":            "ARS",
+      "estado":            "CONFIRMADO",
+      "estadoLiquidacion": "LIQUIDADO"
+    },
+    {
+      "idViaje":           "viaje-dev-003",
+      "idPasajero":        "user_dev_rider2",
+      "idConductor":       "user_dev_driver1",
+      "metodoPago":        "MERCADO_PAGO",
+      "monto":             2200.00,
+      "moneda":            "ARS",
+      "estado":            "PENDIENTE",
       "estadoLiquidacion": "PENDIENTE"
     },
     {
-      "idViaje": "viaje-seed-003",
-      "idPasajero": "user_REPLACE_PASAJERO",
-      "idConductor": "user_REPLACE_CONDUCTOR",
-      "metodoPago": "MERCADO_PAGO",
-      "monto": 1500.00,
-      "moneda": "ARS",
-      "estado": "PENDIENTE",
+      "idViaje":           "viaje-dev-004",
+      "idPasajero":        "user_dev_rider1",
+      "idConductor":       "user_dev_driver2",
+      "metodoPago":        "EFECTIVO",
+      "monto":             3000.00,
+      "moneda":            "ARS",
+      "estado":            "CONFIRMADO",
       "estadoLiquidacion": "PENDIENTE"
+    },
+    {
+      "idViaje":           "viaje-dev-005",
+      "idPasajero":        "user_dev_rider2",
+      "idConductor":       "user_dev_driver2",
+      "metodoPago":        "EFECTIVO",
+      "monto":             2500.00,
+      "moneda":            "ARS",
+      "estado":            "CONFIRMADO",
+      "estadoLiquidacion": "PENDIENTE"
+    },
+    {
+      "idViaje":           "viaje-dev-006",
+      "idPasajero":        "user_dev_rider1",
+      "idConductor":       "user_dev_driver2",
+      "metodoPago":        "EFECTIVO",
+      "monto":             500.00,
+      "moneda":            "ARS",
+      "estado":            "CANCELADO",
+      "estadoLiquidacion": "PENDIENTE"
+    },
+    {
+      "idViaje":           "viaje-dev-007",
+      "idPasajero":        "user_dev_rider2",
+      "idConductor":       "user_dev_driver3",
+      "metodoPago":        "EFECTIVO",
+      "monto":             4000.00,
+      "moneda":            "ARS",
+      "estado":            "CONFIRMADO",
+      "estadoLiquidacion": "LIQUIDADO"
+    },
+    {
+      "idViaje":           "viaje-dev-008",
+      "idPasajero":        "user_dev_rider1",
+      "idConductor":       "user_dev_driver3",
+      "metodoPago":        "EFECTIVO",
+      "monto":             1500.00,
+      "moneda":            "ARS",
+      "estado":            "CONFIRMADO",
+      "estadoLiquidacion": "LIQUIDADO"
     }
   ],
-  "liquidaciones": []
+  "liquidaciones": [
+    {
+      "idConductor":    "user_dev_driver1",
+      "montoPagado":    1620,
+      "estado":         "PROCESADA",
+      "fechaProgramada": "2026-05-28T00:00:00.000Z",
+      "fechaEjecutada":  "2026-05-28T00:00:00.000Z",
+      "detalle": { "mensaje": "Payout seed — driver1" }
+    },
+    {
+      "idConductor":    "user_dev_driver3",
+      "montoPagado":    4950,
+      "estado":         "PROCESADA",
+      "fechaProgramada": "2026-05-28T00:00:00.000Z",
+      "fechaEjecutada":  "2026-05-28T00:00:00.000Z",
+      "detalle": { "mensaje": "Payout seed — driver3" }
+    }
+  ]
 }

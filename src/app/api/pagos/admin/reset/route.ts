@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { auth } from '@/lib/auth'
-import { getUserRole, Rol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
+import { validateAdmin } from '@/lib/validators'
 
 type Target = 'transacciones' | 'billetera' | 'banco' | 'full' | 'reseed'
 
@@ -25,6 +24,7 @@ async function resetFull() {
     prisma.liquidacion.deleteMany({}),
     prisma.transaccion.deleteMany({}),
     prisma.billetera.deleteMany({}),
+    prisma.usuario.deleteMany({ where: { id: { startsWith: 'user_dev_' } } }),
     prisma.bancoCentral.upsert({
       where:  { id: 'main' },
       create: { id: 'main', fondosEmpresa: 0, fondosADebitar: 0, fondosDebitadosHistorico: 0 },
@@ -34,10 +34,8 @@ async function resetFull() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if ((await getUserRole(userId)) !== Rol.ADMIN)
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const caller = await validateAdmin(req)
+  if (!caller) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
   const target: Target = body.target
@@ -87,6 +85,17 @@ export async function POST(req: Request) {
       }
 
       await resetFull()
+
+      if (Array.isArray(seed.usuarios)) {
+        for (const u of seed.usuarios) {
+          if (!u.id || !u.rol) continue
+          await prisma.usuario.upsert({
+            where:  { id: u.id },
+            create: { id: u.id, rol: u.rol },
+            update: { rol: u.rol },
+          })
+        }
+      }
 
       if (seed.bancoCentral) {
         const bc = seed.bancoCentral
@@ -143,6 +152,7 @@ export async function POST(req: Request) {
       }
 
       return NextResponse.json({ ok: true, target, seeded: {
+        usuarios:     seed.usuarios?.length ?? 0,
         transacciones: seed.transacciones?.length ?? 0,
         billeteras:    seed.billeteras?.length ?? 0,
         liquidaciones: seed.liquidaciones?.length ?? 0,

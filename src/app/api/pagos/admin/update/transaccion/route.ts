@@ -1,21 +1,13 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { getUserRole, Rol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
+import { validateAdmin } from '@/lib/validators'
 
 const ESTADOS_VALIDOS = ['PENDIENTE', 'CONFIRMADO', 'CANCELADO']
 const CORTE = 0.10
 const NETO  = 0.90
 
-async function adminGuard() {
-  const { userId } = await auth()
-  if (!userId) return null
-  if ((await getUserRole(userId)) !== Rol.ADMIN) return null
-  return userId
-}
-
 export async function GET(req: Request) {
-  if (!(await adminGuard())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await validateAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
@@ -38,7 +30,7 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  if (!(await adminGuard())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await validateAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
   const { id, estado } = body
