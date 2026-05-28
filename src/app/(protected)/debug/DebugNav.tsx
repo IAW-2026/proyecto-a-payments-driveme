@@ -4,22 +4,26 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
 const TABS = [
-  { key: 'fondos',        label: 'Panel Financiero' },
-  { key: 'transacciones', label: 'Transacciones' },
+  { key: 'seed',      label: 'Seed' },
+  { key: 'update',    label: 'Update' },
+  { key: 'reset',     label: 'Reset' },
+  { key: 'endpoints', label: 'Endpoints' },
+  { key: 'mocks',     label: 'Mocks GET' },
 ]
 
-export default function AdminNav() {
+export default function DebugNav() {
   const searchParams = useSearchParams()
-  const activeTab = searchParams.get('tab') ?? 'fondos'
+  const activeTab = searchParams.get('tab') ?? 'seed'
 
   return (
     <nav
-      aria-label="Admin tabs"
+      aria-label="Debug tabs"
       style={{
         display: 'flex',
         borderBottom: '1px solid var(--border)',
         marginBottom: '2rem',
         gap: 0,
+        overflowX: 'auto',
       }}
     >
       {TABS.map(({ key, label }) => {
@@ -27,7 +31,7 @@ export default function AdminNav() {
         return (
           <Link
             key={key}
-            href={`/admin?tab=${key}`}
+            href={`/debug?tab=${key}`}
             style={{
               padding: '0.75rem 1.75rem',
               fontWeight: isActive ? 700 : 500,
@@ -37,6 +41,7 @@ export default function AdminNav() {
               textDecoration: 'none',
               marginBottom: '-1px',
               transition: 'color 0.15s, border-color 0.15s',
+              whiteSpace: 'nowrap',
             }}
           >
             {label}

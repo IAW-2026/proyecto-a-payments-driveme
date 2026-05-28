@@ -50,11 +50,30 @@ export async function PUT(req: Request) {
 
   if (!idConductor) return NextResponse.json({ error: 'Missing idConductor' }, { status: 400 })
 
-  const b = await prisma.billetera.upsert({
-    where:  { idConductor },
-    create: { idConductor, montoPendiente, montoLiquidado },
-    update: { montoPendiente, montoLiquidado },
-  })
+  // Compute deltas to keep BancoCentral in sync with the billetera override
+  const current = await prisma.billetera.findUnique({ where: { idConductor } })
+  const deltaPendiente = montoPendiente - Number(current?.montoPendiente ?? 0)
+  const deltaLiquidado = montoLiquidado - Number(current?.montoLiquidado ?? 0)
+
+  const [b] = await prisma.$transaction([
+    prisma.billetera.upsert({
+      where:  { idConductor },
+      create: { idConductor, montoPendiente, montoLiquidado },
+      update: { montoPendiente, montoLiquidado },
+    }),
+    prisma.bancoCentral.upsert({
+      where:  { id: 'main' },
+      create: {
+        id: 'main',
+        fondosADebitar:           Math.max(0, deltaPendiente),
+        fondosDebitadosHistorico: Math.max(0, deltaLiquidado),
+      },
+      update: {
+        fondosADebitar:           { increment: deltaPendiente },
+        fondosDebitadosHistorico: { increment: deltaLiquidado },
+      },
+    }),
+  ])
 
   return NextResponse.json({
     idConductor:    b.idConductor,

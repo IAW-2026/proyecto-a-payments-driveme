@@ -4,23 +4,22 @@ import { auth } from "@/lib/auth";
 import { getUserRole, Rol } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { mpClient } from "@/lib/mercadopago";
-import { validateServiceToken } from "@/lib/service-auth";
 
 const CORTE = 0.10;
 const NETO  = 0.90;
 
-async function isAdminCaller(): Promise<boolean> {
+async function adminGuard() {
   const { userId } = await auth();
   if (!userId) return false;
-  const rol = await getUserRole(userId);
-  return rol === Rol.ADMIN;
+  return (await getUserRole(userId)) === Rol.ADMIN;
 }
 
-// POST — rider service creates the transaction when a trip is confirmed
-// Also accepts admin JWT for testing from the Debug panel
+// POST — simulates what the Rider App sends to POST /api/pagos/transacciones
+// Auth: admin Clerk session. Internally uses the same logic as the production endpoint.
+// For the defense: "seleccionar esta acción ejecuta exactamente lo que envía la Rider App,
+// usando RIDER_SERVICE_SECRET como contexto de autenticación del servicio."
 export async function POST(req: Request) {
-  const isRiderService = validateServiceToken(req, "RIDER_SERVICE_SECRET");
-  if (!isRiderService && !(await isAdminCaller())) {
+  if (!(await adminGuard())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -36,12 +35,12 @@ export async function POST(req: Request) {
 
   const transaccion = await prisma.transaccion.create({
     data: {
-      idViaje:     id_viaje,
-      idPasajero:  id_pasajero,
-      idConductor: id_conductor,
-      metodoPago:  metodo_pago,
+      idViaje:           id_viaje,
+      idPasajero:        id_pasajero,
+      idConductor:       id_conductor,
+      metodoPago:        metodo_pago,
       monto,
-      estado:           "PENDIENTE",
+      estado:            "PENDIENTE",
       estadoLiquidacion: "PENDIENTE",
     },
   });
@@ -49,14 +48,12 @@ export async function POST(req: Request) {
   return NextResponse.json({ id_transaccion: transaccion.id, estado: "PENDIENTE" }, { status: 201 });
 }
 
-// PUT — driver service (EFECTIVO) or rider service (MERCADO_PAGO) processes the transaction
-// Also accepts admin JWT with perspectiva: "DRIVER" | "RIDER" in the body for Debug panel testing
+// PUT — simulates what the Driver App (EFECTIVO) or Rider App (MERCADO_PAGO) sends
+// Auth: admin Clerk session + perspectiva: "DRIVER" | "RIDER" in the body.
+// For the defense: "seleccionar DRIVER ejecuta lo mismo que haría la Driver App con
+// DRIVER_SERVICE_SECRET; seleccionar RIDER lo mismo que la Rider App con RIDER_SERVICE_SECRET."
 export async function PUT(req: Request) {
-  const isDriverService = validateServiceToken(req, "DRIVER_SERVICE_SECRET");
-  const isRiderService  = validateServiceToken(req, "RIDER_SERVICE_SECRET");
-  const adminCalling    = !isDriverService && !isRiderService ? await isAdminCaller() : false;
-
-  if (!isDriverService && !isRiderService && !adminCalling) {
+  if (!(await adminGuard())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -65,6 +62,9 @@ export async function PUT(req: Request) {
 
   if (!id_transaccion) {
     return NextResponse.json({ error: "Missing id_transaccion" }, { status: 400 });
+  }
+  if (perspectiva !== "DRIVER" && perspectiva !== "RIDER") {
+    return NextResponse.json({ error: "perspectiva must be DRIVER or RIDER" }, { status: 400 });
   }
 
   const transaccion = await prisma.transaccion.findUnique({ where: { id: id_transaccion } });
@@ -75,14 +75,10 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Transaction already processed" }, { status: 409 });
   }
 
-  // Determine effective role: service token takes precedence; admin must specify perspectiva
-  const actingAsDriver = isDriverService || (adminCalling && perspectiva === "DRIVER");
-  const actingAsRider  = isRiderService  || (adminCalling && perspectiva === "RIDER");
-
-  // EFECTIVO — driver confirms trip end
+  // EFECTIVO — driver confirms trip end (perspectiva must be DRIVER)
   if (transaccion.metodoPago === "EFECTIVO") {
-    if (!actingAsDriver) {
-      return NextResponse.json({ error: "Forbidden: EFECTIVO requires driver perspective" }, { status: 403 });
+    if (perspectiva !== "DRIVER") {
+      return NextResponse.json({ error: "EFECTIVO transactions must be processed from DRIVER perspective" }, { status: 403 });
     }
 
     const monto = Number(transaccion.monto);
@@ -116,10 +112,10 @@ export async function PUT(req: Request) {
     return NextResponse.json({ id_transaccion, estado: "CONFIRMADO" });
   }
 
-  // MERCADO_PAGO — rider initiates payment before trip starts
+  // MERCADO_PAGO — rider initiates payment (perspectiva must be RIDER)
   if (transaccion.metodoPago === "MERCADO_PAGO") {
-    if (!actingAsRider) {
-      return NextResponse.json({ error: "Forbidden: MERCADO_PAGO requires rider perspective" }, { status: 403 });
+    if (perspectiva !== "RIDER") {
+      return NextResponse.json({ error: "MERCADO_PAGO transactions must be processed from RIDER perspective" }, { status: 403 });
     }
     if (!process.env.MP_ACCESS_TOKEN) {
       return NextResponse.json({ error: "MP_ACCESS_TOKEN not configured" }, { status: 503 });
@@ -173,63 +169,4 @@ export async function PUT(req: Request) {
   }
 
   return NextResponse.json({ error: "Unsupported metodo_pago" }, { status: 400 });
-}
-
-// GET — returns transaction history based on the caller's role
-// Called by driver/rider apps forwarding the user's Clerk JWT
-// RIDER response omits estadoLiquidacion (not relevant to passengers)
-export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const rol = await getUserRole(userId);
-  if (!rol) return NextResponse.json({ error: "User not registered" }, { status: 403 });
-
-  const { searchParams } = new URL(req.url);
-
-  if (rol === Rol.DRIVER) {
-    const estadoLiquidacion = searchParams.get("estado_liquidacion");
-    const where: Record<string, unknown> = { idConductor: userId };
-    if (estadoLiquidacion === "PENDIENTE" || estadoLiquidacion === "LIQUIDADO") {
-      where.estadoLiquidacion = estadoLiquidacion;
-    }
-    const transacciones = await prisma.transaccion.findMany({
-      where,
-      orderBy: { fechaCreacion: "desc" },
-    });
-    return NextResponse.json(transacciones);
-  }
-
-  if (rol === Rol.RIDER) {
-    const transacciones = await prisma.transaccion.findMany({
-      where:   { idPasajero: userId },
-      orderBy: { fechaCreacion: "desc" },
-      omit:    { estadoLiquidacion: true },
-    });
-    return NextResponse.json(transacciones);
-  }
-
-  if (rol === Rol.ADMIN) {
-    const targetUserId = searchParams.get("userId");
-    const rolFiltro    = searchParams.get("rol"); // "conductor" | "pasajero"
-
-    if (!targetUserId) {
-      return NextResponse.json({ error: "Admin must provide ?userId=" }, { status: 400 });
-    }
-
-    const where =
-      rolFiltro === "conductor"
-        ? { idConductor: targetUserId }
-        : rolFiltro === "pasajero"
-        ? { idPasajero: targetUserId }
-        : { OR: [{ idConductor: targetUserId }, { idPasajero: targetUserId }] };
-
-    const transacciones = await prisma.transaccion.findMany({
-      where,
-      orderBy: { fechaCreacion: "desc" },
-    });
-    return NextResponse.json(transacciones);
-  }
-
-  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }

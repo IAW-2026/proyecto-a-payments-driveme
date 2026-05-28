@@ -1,131 +1,13 @@
-import React from 'react'
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { prisma } from '@/lib/prisma'
-import UserSearchForm from './UserSearchForm'
-
-export const metadata: Metadata = {
-  title: 'Transacciones — DriveMe Payments',
-  description: 'Historial de transacciones por usuario',
-  robots: { index: false, follow: false },
-}
-
-const PAGE_SIZE = 10
-
-const BADGE: Record<string, string> = {
-  CONFIRMADO: 'badge-captured',
-  PENDIENTE:  'badge-pending',
-  CANCELADO:  'badge-failed',
-}
-
-const BADGE_LIQ: Record<string, string> = {
-  PENDIENTE: 'badge-pending',
-  LIQUIDADO: 'badge-captured',
-}
+import { redirect } from 'next/navigation'
 
 export default async function TransaccionesPage({
   searchParams,
 }: {
   searchParams: Promise<{ userId?: string; page?: string }>
 }) {
-  const params = await searchParams
-  const targetId = params.userId?.trim() || null
-  const page = Math.max(1, Number(params.page ?? 1))
-
-  if (!targetId) {
-    return (
-      <main className="page-shell">
-        <h1 className="page-title">Transacciones</h1>
-        <p className="page-sub">Consultá el historial de un usuario por su Clerk ID</p>
-        <UserSearchForm />
-      </main>
-    )
-  }
-
-  const [total, txs] = await Promise.all([
-    prisma.transaccion.count({
-      where: { OR: [{ idPasajero: targetId }, { idConductor: targetId }] },
-    }),
-    prisma.transaccion.findMany({
-      where: { OR: [{ idPasajero: targetId }, { idConductor: targetId }] },
-      orderBy: { fechaCreacion: 'desc' },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-  ])
-
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  const fmtDate = (d: Date) => d.toLocaleDateString('es-AR')
-
-  return (
-    <main className="page-shell">
-      <h1 className="page-title">Transacciones</h1>
-      <p className="page-sub">Usuario: <code style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{targetId}</code> — {total} registros</p>
-
-      <UserSearchForm current={targetId} />
-
-      {txs.length === 0 ? (
-        <div className="glass-card empty-state"><p>No hay transacciones para este usuario.</p></div>
-      ) : (
-        <>
-          <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Viaje</th>
-                  <th>Rol</th>
-                  <th>Monto</th>
-                  <th>Método</th>
-                  <th>Estado</th>
-                  <th>Liquidación</th>
-                </tr>
-              </thead>
-              <tbody>
-                {txs.map((tx) => (
-                  <tr key={tx.id}>
-                    <td style={{ color: 'var(--muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                      {fmtDate(tx.fechaCreacion)}
-                    </td>
-                    <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)' }}>
-                      {tx.idViaje.slice(0, 8)}…
-                    </td>
-                    <td style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-                      {tx.idPasajero === targetId ? 'Pasajero' : 'Conductor'}
-                    </td>
-                    <td style={{ fontWeight: 600 }}>
-                      ${Number(tx.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })} {tx.moneda}
-                    </td>
-                    <td>
-                      <span style={{ fontSize: '0.8rem', color: tx.metodoPago === 'MERCADO_PAGO' ? 'var(--accent)' : 'var(--muted)' }}>
-                        {tx.metodoPago === 'MERCADO_PAGO' ? 'Mercado Pago' : 'Efectivo'}
-                      </span>
-                    </td>
-                    <td><span className={`badge ${BADGE[tx.estado] ?? 'badge-pending'}`}>{tx.estado}</span></td>
-                    <td>
-                      <span className={`badge ${BADGE_LIQ[tx.estadoLiquidacion] ?? 'badge-pending'}`} style={{ fontSize: '0.7rem' }}>
-                        {tx.estadoLiquidacion}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Página {page} de {totalPages}</span>
-              {page > 1 && (
-                <Link href={`/transacciones?userId=${targetId}&page=${page - 1}`} className="btn-ghost" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>← Anterior</Link>
-              )}
-              {page < totalPages && (
-                <Link href={`/transacciones?userId=${targetId}&page=${page + 1}`} className="btn-ghost" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>Siguiente →</Link>
-              )}
-            </div>
-          )}
-        </>
-      )}
-    </main>
-  )
+  const { userId, page } = await searchParams
+  const params = new URLSearchParams({ tab: 'transacciones' })
+  if (userId) params.set('userId', userId)
+  if (page)   params.set('page', page)
+  redirect(`/admin?${params.toString()}`)
 }

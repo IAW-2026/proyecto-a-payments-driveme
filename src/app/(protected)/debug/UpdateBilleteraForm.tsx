@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import UserIdSelect from './UserIdSelect'
 
 type Amounts = {
   montoPendiente: string
@@ -81,11 +82,11 @@ export default function UpdateBilleteraForm() {
       <form onSubmit={handleLookup} aria-label="Buscar billetera">
         <div className="field-group single" style={{ marginBottom: '1rem' }}>
           <label>
-            Clerk Driver ID
-            <input value={driverId} onChange={e => setDriverId(e.target.value)} placeholder="user_2..." />
+            Conductor (Clerk)
+            <UserIdSelect value={driverId} onChange={v => { setDriverId(v); setFound(false) }} filterRol="DRIVER" />
           </label>
         </div>
-        <button type="submit" className="btn-ghost" disabled={lookupLoading} style={{ marginBottom: found ? '1.5rem' : 0 }}>
+        <button type="submit" className="btn-ghost" disabled={lookupLoading || !driverId} style={{ marginBottom: found ? '1.5rem' : 0 }}>
           {lookupLoading ? 'Buscando…' : 'Cargar billetera'}
         </button>
       </form>

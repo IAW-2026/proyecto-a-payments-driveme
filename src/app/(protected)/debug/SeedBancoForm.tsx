@@ -3,12 +3,12 @@
 import { useState } from 'react'
 
 export default function SeedBancoForm() {
-  const [fondosEmpresa, setFondosEmpresa]                     = useState('0')
-  const [fondosADebitar, setFondosADebitar]                   = useState('0')
-  const [fondosDebitadosHistorico, setDebitadosHistorico]     = useState('0')
+  const [fondosEmpresa, setFondosEmpresa]                       = useState('0')
+  const [fondosADebitar, setFondosADebitar]                     = useState('0')
+  const [fondosDebitadosHistorico, setDebitadosHistorico]       = useState('0')
   const [fondosReembolsadosHistorico, setReembolsadosHistorico] = useState('0')
-  const [loading, setLoading]                                 = useState(false)
-  const [msg, setMsg]                                         = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [loading, setLoading]                                   = useState(false)
+  const [msg, setMsg]                                           = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()

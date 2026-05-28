@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import UserIdSelect from './UserIdSelect'
 
 const ESTADOS = ['CONFIRMADO', 'PENDIENTE', 'CANCELADO', 'REEMBOLSADO']
 
@@ -46,12 +47,12 @@ export default function SeedTransaccionForm() {
       <form onSubmit={handleSubmit} aria-label="Seed transacción">
         <div className="field-group" style={{ marginBottom: '1rem' }}>
           <label>
-            ID Pasajero (Clerk)
-            <input value={idPasajero} onChange={e => setIdPasajero(e.target.value)} placeholder="user_2abc…" required />
+            Pasajero (Clerk)
+            <UserIdSelect value={idPasajero} onChange={setIdPasajero} filterRol="RIDER" required />
           </label>
           <label>
-            ID Conductor (Clerk)
-            <input value={idConductor} onChange={e => setIdConductor(e.target.value)} placeholder="user_2xyz…" required />
+            Conductor (Clerk)
+            <UserIdSelect value={idConductor} onChange={setIdConductor} filterRol="DRIVER" required />
           </label>
         </div>
 

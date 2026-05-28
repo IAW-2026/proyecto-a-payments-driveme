@@ -37,14 +37,14 @@ type Result = {
 }
 
 export default function TestProcesarForm() {
-  const [idViaje, setIdViaje]           = useState(() => crypto.randomUUID())
-  const [idPasajero, setIdPasajero]     = useState('')
-  const [idConductor, setIdConductor]   = useState('')
-  const [monto, setMonto]               = useState('1000')
-  const [metodoPago, setMetodoPago]     = useState('EFECTIVO')
-  const [loading, setLoading]           = useState(false)
-  const [result, setResult]             = useState<Result | null>(null)
-  const [msg, setMsg]                   = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [idViaje, setIdViaje]         = useState(() => crypto.randomUUID())
+  const [idPasajero, setIdPasajero]   = useState('')
+  const [idConductor, setIdConductor] = useState('')
+  const [monto, setMonto]             = useState('1000')
+  const [metodoPago, setMetodoPago]   = useState('EFECTIVO')
+  const [loading, setLoading]         = useState(false)
+  const [result, setResult]           = useState<Result | null>(null)
+  const [msg, setMsg]                 = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()

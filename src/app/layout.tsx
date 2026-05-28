@@ -4,6 +4,7 @@ import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from '@cl
 import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
 import Link from 'next/link'
 import AdminLink from './AdminLink'
+import DebugLink from './DebugLink'
 import './globals.css'
 
 const fraunces = Fraunces({
@@ -24,10 +25,7 @@ export const metadata: Metadata = {
   description: 'Módulo de pagos del proyecto IAW 2026',
 }
 
-const NAV = [
-  { href: '/transacciones', label: 'Transacciones' },
-  { href: '/fondos',        label: 'Panel Financiero' },
-]
+const NAV: { href: string; label: string }[] = []
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -65,6 +63,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   <Link key={href} href={href} className="nav-link">{label}</Link>
                 ))}
                 <Suspense fallback={null}><AdminLink /></Suspense>
+                <Suspense fallback={null}><DebugLink /></Suspense>
               </nav>
             </Show>
 

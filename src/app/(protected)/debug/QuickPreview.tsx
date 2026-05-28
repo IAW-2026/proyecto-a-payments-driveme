@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import UserIdSelect from './UserIdSelect'
 
 type PreviewType = 'transacciones' | 'billetera'
 
@@ -49,9 +50,10 @@ export default function QuickPreview({ type }: { type: PreviewType }) {
     <div className="glass-card" style={{ minHeight: '160px' }}>
       <p style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '0.9rem' }}>{label}</p>
       <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <input
+        <UserIdSelect
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={setQuery}
+          filterRol={isTx ? undefined : 'DRIVER'}
           placeholder={inputLabel}
           style={{ flex: 1, margin: 0 }}
         />

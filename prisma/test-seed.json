@@ -1,0 +1,48 @@
+{
+  "_description": "Test baseline — DriveMe Payments. Reemplazá los IDs con Clerk IDs reales antes de usar.",
+  "bancoCentral": {
+    "fondosEmpresa": 0,
+    "fondosADebitar": 0,
+    "fondosDebitadosHistorico": 0
+  },
+  "billeteras": [
+    {
+      "idConductor": "user_REPLACE_CONDUCTOR",
+      "montoPendiente": 0,
+      "montoLiquidado": 0
+    }
+  ],
+  "transacciones": [
+    {
+      "idViaje": "viaje-seed-001",
+      "idPasajero": "user_REPLACE_PASAJERO",
+      "idConductor": "user_REPLACE_CONDUCTOR",
+      "metodoPago": "EFECTIVO",
+      "monto": 1000.00,
+      "moneda": "ARS",
+      "estado": "CONFIRMADO",
+      "estadoLiquidacion": "PENDIENTE"
+    },
+    {
+      "idViaje": "viaje-seed-002",
+      "idPasajero": "user_REPLACE_PASAJERO",
+      "idConductor": "user_REPLACE_CONDUCTOR",
+      "metodoPago": "EFECTIVO",
+      "monto": 2500.00,
+      "moneda": "ARS",
+      "estado": "CONFIRMADO",
+      "estadoLiquidacion": "PENDIENTE"
+    },
+    {
+      "idViaje": "viaje-seed-003",
+      "idPasajero": "user_REPLACE_PASAJERO",
+      "idConductor": "user_REPLACE_CONDUCTOR",
+      "metodoPago": "MERCADO_PAGO",
+      "monto": 1500.00,
+      "moneda": "ARS",
+      "estado": "PENDIENTE",
+      "estadoLiquidacion": "PENDIENTE"
+    }
+  ],
+  "liquidaciones": []
+}

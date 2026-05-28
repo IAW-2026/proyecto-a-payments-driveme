@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Rol } from '@/lib/enums'
+import UserIdSelect from './UserIdSelect'
 
 const ROLES: { value: Rol; label: string }[] = [
   { value: Rol.DRIVER, label: 'Driver (Conductor)' },
@@ -10,10 +11,10 @@ const ROLES: { value: Rol; label: string }[] = [
 ]
 
 export default function RoleForm() {
-  const [userId, setUserId] = useState('')
-  const [rol, setRol]       = useState<Rol>(Rol.DRIVER)
+  const [userId, setUserId]   = useState('')
+  const [rol, setRol]         = useState<Rol>(Rol.DRIVER)
   const [loading, setLoading] = useState(false)
-  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [msg, setMsg]         = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()
@@ -54,13 +55,8 @@ export default function RoleForm() {
       <form onSubmit={handleSubmit} aria-label="Actualizar rol de usuario">
         <div className="field-group single" style={{ marginBottom: '1rem' }}>
           <label>
-            Clerk User ID
-            <input
-              value={userId}
-              onChange={e => setUserId(e.target.value)}
-              placeholder="user_2abc123xyz..."
-              required
-            />
+            Usuario (Clerk)
+            <UserIdSelect value={userId} onChange={setUserId} required />
           </label>
         </div>
 
@@ -78,7 +74,7 @@ export default function RoleForm() {
         <button
           type="submit"
           className="btn-primary"
-          disabled={loading || !userId.trim()}
+          disabled={loading || !userId}
           style={{ width: '100%' }}
         >
           {loading ? 'Actualizando…' : 'Actualizar Rol'}

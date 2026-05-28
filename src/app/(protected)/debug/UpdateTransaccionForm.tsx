@@ -23,12 +23,12 @@ type TxInfo = {
 }
 
 export default function UpdateTransaccionForm() {
-  const [txId, setTxId]         = useState('')
-  const [tx, setTx]             = useState<TxInfo | null>(null)
-  const [newEstado, setNewEstado] = useState('CONFIRMADO')
+  const [txId, setTxId]               = useState('')
+  const [tx, setTx]                   = useState<TxInfo | null>(null)
+  const [newEstado, setNewEstado]     = useState('CONFIRMADO')
   const [lookupLoading, setLookupLoading] = useState(false)
-  const [loading, setLoading]   = useState(false)
-  const [msg, setMsg]           = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [loading, setLoading]         = useState(false)
+  const [msg, setMsg]                 = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   async function handleLookup(e: React.SyntheticEvent) {
     e.preventDefault()

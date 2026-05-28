@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import UserIdSelect from './UserIdSelect'
 
 export default function SeedBilleteraForm() {
   const [idConductor, setIdConductor]       = useState('')
@@ -38,8 +39,8 @@ export default function SeedBilleteraForm() {
       <form onSubmit={handleSubmit} aria-label="Seed billetera">
         <div className="field-group single" style={{ marginBottom: '1rem' }}>
           <label>
-            ID Conductor (Clerk)
-            <input value={idConductor} onChange={e => setIdConductor(e.target.value)} placeholder="user_2xyz…" required />
+            Conductor (Clerk)
+            <UserIdSelect value={idConductor} onChange={setIdConductor} filterRol="DRIVER" required />
           </label>
         </div>
 
