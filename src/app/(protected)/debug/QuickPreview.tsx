@@ -2,22 +2,10 @@
 
 import { useState } from 'react'
 import UserIdSelect from './UserIdSelect'
+import { fmt, fmtDateShort } from '@/lib/fmt'
+import { BADGE_TX } from '@/lib/badges'
 
 type PreviewType = 'transacciones' | 'billetera'
-
-const BADGE: Record<string, string> = {
-  CONFIRMADO: 'badge-captured',
-  PENDIENTE:  'badge-pending',
-  CANCELADO:  'badge-failed',
-}
-
-function fmt(val: string | number) {
-  return `$${Number(val).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
-}
 
 export default function QuickPreview({ type }: { type: PreviewType }) {
   const [query, setQuery]       = useState('')
@@ -80,10 +68,10 @@ export default function QuickPreview({ type }: { type: PreviewType }) {
                 <tbody>
                   {data.map((tx: any) => (
                     <tr key={tx.id}>
-                      <td>{fmtDate(tx.fechaCreacion)}</td>
+                      <td>{fmtDateShort(tx.fechaCreacion)}</td>
                       <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{tx.idViaje}</td>
-                      <td>{tx.moneda} {fmt(tx.monto)}</td>
-                      <td><span className={`badge ${BADGE[tx.estado] ?? 'badge-pending'}`}>{tx.estado}</span></td>
+                      <td>ARS {fmt(tx.monto)}</td>
+                      <td><span className={`badge ${BADGE_TX[tx.estado] ?? 'badge-pending'}`}>{tx.estado}</span></td>
                     </tr>
                   ))}
                 </tbody>

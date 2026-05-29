@@ -2,10 +2,7 @@
 
 import { useState } from 'react'
 import UserIdSelect from './UserIdSelect'
-
-function fmt(n: number) {
-  return `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
-}
+import { fmt } from '@/lib/fmt'
 
 export default function TestPostLiquidacionForm() {
   const [idConductor, setIdConductor] = useState('')

@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react'
 import UserIdSelect from './UserIdSelect'
 
-const ESTADOS = ['CONFIRMADO', 'PENDIENTE', 'CANCELADO', 'REEMBOLSADO']
+const ESTADOS = ['CONFIRMADO', 'PENDIENTE', 'CANCELADO']
 
 export default function SeedTransaccionForm() {
   const [idPasajero, setIdPasajero]   = useState('')
   const [idConductor, setIdConductor] = useState('')
   const [idViaje, setIdViaje]         = useState('')
   const [monto, setMonto]             = useState('')
-  const [moneda, setMoneda]           = useState('ARS')
   const [estado, setEstado]           = useState('CONFIRMADO')
   const [metodoPago, setMetodoPago]   = useState('EFECTIVO')
   const [loading, setLoading]         = useState(false)
@@ -28,7 +27,7 @@ export default function SeedTransaccionForm() {
       const res = await fetch('/api/pagos/admin/seed/transaccion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idPasajero, idConductor, idViaje, monto: Number(monto), moneda, estado, metodoPago }),
+        body: JSON.stringify({ idPasajero, idConductor, idViaje, monto: Number(monto), estado, metodoPago }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Error al crear transacción')
@@ -68,13 +67,6 @@ export default function SeedTransaccionForm() {
         </div>
 
         <div className="field-group" style={{ marginBottom: '1rem' }}>
-          <label>
-            Moneda
-            <select value={moneda} onChange={e => setMoneda(e.target.value)}>
-              <option value="ARS">ARS</option>
-              <option value="USD">USD</option>
-            </select>
-          </label>
           <label>
             Estado
             <select value={estado} onChange={e => setEstado(e.target.value)}>

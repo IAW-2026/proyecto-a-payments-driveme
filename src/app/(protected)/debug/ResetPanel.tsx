@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-type Target = 'transacciones' | 'billetera' | 'banco' | 'full' | 'reseed'
+type Target = 'transacciones' | 'billetera' | 'full' | 'reseed'
 
 type Msg = { type: 'success' | 'error'; text: string }
 
@@ -107,12 +107,6 @@ export default function ResetPanel() {
             onDone={onDone}
           />
         </div>
-
-        <ResetButton
-          label="Resetear Banco Central"
-          target="banco"
-          onDone={onDone}
-        />
 
         <ResetButton
           label="Reset Total (elimina todo)"

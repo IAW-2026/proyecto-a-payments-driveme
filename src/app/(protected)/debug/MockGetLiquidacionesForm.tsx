@@ -2,20 +2,8 @@
 
 import { useState } from 'react'
 import UserIdSelect from './UserIdSelect'
-
-const BADGE_L: Record<string, string> = {
-  PROCESADA: 'badge-captured',
-  PENDIENTE: 'badge-pending',
-  FALLIDA:   'badge-failed',
-}
-
-function fmt(n: number) {
-  return `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
-}
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
-}
+import { fmt, fmtDate } from '@/lib/fmt'
+import { BADGE_L } from '@/lib/badges'
 
 type LiqResult = {
   montoPendiente: number

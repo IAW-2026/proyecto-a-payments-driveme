@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 
 const TABS = [
   { key: 'seed',      label: 'Seed' },
-  { key: 'update',    label: 'Update' },
+  { key: 'update',    label: 'Role Manager' },
   { key: 'reset',     label: 'Reset' },
   { key: 'endpoints', label: 'Endpoints' },
   { key: 'mocks',     label: 'Mocks GET' },

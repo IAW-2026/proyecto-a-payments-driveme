@@ -6,6 +6,8 @@ import { getUserRole, Rol } from '@/lib/roles'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import AdminNav from './AdminNav'
+import { fmt, fmtDate } from '@/lib/fmt'
+import { BADGE_TX, BADGE_LIQ, BADGE_L } from '@/lib/badges'
 
 export const metadata: Metadata = {
   title: 'Admin — DriveMe Payments',
@@ -14,48 +16,6 @@ export const metadata: Metadata = {
 }
 
 const PAGE_SIZE = 10
-
-const BADGE_L: Record<string, string> = {
-  PROCESADA: 'badge-captured',
-  PENDIENTE: 'badge-pending',
-  FALLIDA:   'badge-failed',
-}
-
-const BADGE_TX: Record<string, string> = {
-  CONFIRMADO: 'badge-captured',
-  PENDIENTE:  'badge-pending',
-  CANCELADO:  'badge-failed',
-}
-
-const BADGE_LIQ: Record<string, string> = {
-  PENDIENTE: 'badge-pending',
-  LIQUIDADO: 'badge-captured',
-}
-
-function fmt(n: number) {
-  return `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
-}
-
-function fmtDate(d: Date) {
-  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <h2 style={{
-      fontFamily: 'var(--font-fraunces)',
-      fontSize: '1.1rem',
-      fontWeight: 700,
-      marginTop: '2.5rem',
-      marginBottom: '1rem',
-      paddingBottom: '0.5rem',
-      borderBottom: '1px solid var(--border)',
-      color: 'var(--gold)',
-    }}>
-      {title}
-    </h2>
-  )
-}
 
 export default async function AdminPage({
   searchParams,
@@ -111,75 +71,125 @@ export default async function AdminPage({
 
   return (
     <main className="page-shell" style={{ maxWidth: '960px' }}>
-      <h1 className="page-title">Panel de Administración</h1>
-      <p className="page-sub">Vista de producción — Banco Central, billeteras y transacciones</p>
 
-      <Suspense fallback={<div style={{ height: '2.75rem', borderBottom: '1px solid var(--border)', marginBottom: '2rem' }} />}>
+      {/* ── Command header ────────────────────────────────────────────── */}
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '0.5rem',
+        }}>
+          <span style={{
+            fontFamily: "'Courier New', monospace",
+            fontSize: '0.62rem',
+            fontWeight: 700,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: 'var(--gold)',
+          }}>
+            Consola Admin · DriveMe Payments
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{
+              width: '6px', height: '6px',
+              borderRadius: '50%',
+              background: 'var(--accent)',
+              boxShadow: '0 0 6px var(--accent)',
+              display: 'inline-block',
+            }} />
+            <span style={{
+              fontFamily: "'Courier New', monospace",
+              fontSize: '0.6rem',
+              letterSpacing: '0.12em',
+              color: 'var(--accent)',
+              textTransform: 'uppercase',
+            }}>Sistema activo</span>
+          </span>
+        </div>
+        <h1 style={{
+          fontFamily: 'var(--font-fraunces)',
+          fontSize: 'clamp(1.75rem, 4vw, 2.25rem)',
+          fontWeight: 800,
+          letterSpacing: '-0.04em',
+          color: 'var(--text)',
+          margin: 0,
+        }}>
+          Administración
+        </h1>
+      </div>
+
+      <Suspense fallback={<div style={{ height: '3rem', marginBottom: '2.5rem' }} />}>
         <AdminNav />
       </Suspense>
 
-      {/* ── PANEL FINANCIERO ──────────────────────────────────────────── */}
+      {/* ── FONDOS ────────────────────────────────────────────────────── */}
       {tab === 'fondos' && (
         <>
-          <SectionHeader title="Banco Central" />
-          <div className="glass-card" style={{ marginBottom: '2rem' }}>
-            {banco ? (
-              <div style={{ display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
-                <div>
-                  <p className="balance-label">Fondos a debitar (conductores)</p>
-                  <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)', marginTop: '0.25rem' }}>
-                    {fmt(Number(banco.fondosADebitar))}
-                  </p>
-                </div>
-                <div>
-                  <p className="balance-label">Fondos empresa (10%)</p>
-                  <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--gold)', marginTop: '0.25rem' }}>
-                    {fmt(Number(banco.fondosEmpresa))}
-                  </p>
-                </div>
-                <div>
-                  <p className="balance-label">Debitados histórico</p>
-                  <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--muted)', marginTop: '0.25rem' }}>
-                    {fmt(Number(banco.fondosDebitadosHistorico))}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="empty-state" style={{ padding: '1rem 0' }}>
-                <p>Sin movimientos registrados aún.</p>
-              </div>
-            )}
+          {/* Banco Central stat grid — always visible */}
+          <div className="admin-stat-grid">
+            <div className="admin-stat-panel" style={{ borderTopColor: 'var(--accent)' }}>
+              <p className="balance-label">A debitar · conductores</p>
+              <p style={{
+                fontFamily: 'var(--font-fraunces)',
+                fontSize: '1.8rem',
+                fontWeight: 700,
+                color: 'var(--accent)',
+                letterSpacing: '-0.03em',
+                marginTop: '0.35rem',
+              }}>
+                {banco ? fmt(Number(banco.fondosADebitar)) : '—'}
+              </p>
+            </div>
+            <div className="admin-stat-panel" style={{ borderTopColor: 'var(--gold)' }}>
+              <p className="balance-label">Fondos empresa · 10%</p>
+              <p style={{
+                fontFamily: 'var(--font-fraunces)',
+                fontSize: '1.8rem',
+                fontWeight: 700,
+                color: 'var(--gold)',
+                letterSpacing: '-0.03em',
+                marginTop: '0.35rem',
+              }}>
+                {banco ? fmt(Number(banco.fondosEmpresa)) : '—'}
+              </p>
+            </div>
+            <div className="admin-stat-panel" style={{ borderTopColor: 'var(--muted)' }}>
+              <p className="balance-label">Debitado histórico</p>
+              <p style={{
+                fontFamily: 'var(--font-fraunces)',
+                fontSize: '1.8rem',
+                fontWeight: 700,
+                color: 'var(--muted)',
+                letterSpacing: '-0.03em',
+                marginTop: '0.35rem',
+              }}>
+                {banco ? fmt(Number(banco.fondosDebitadosHistorico)) : '—'}
+              </p>
+            </div>
           </div>
 
-          <SectionHeader title="Billetera por conductor" />
-          <form
-            method="GET"
-            action="/admin"
-            aria-label="Buscar billetera por conductor"
-            style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', maxWidth: '520px' }}
-          >
+          {/* Billetera lookup */}
+          <p style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
+            Billetera del conductor
+          </p>
+          <form method="GET" action="/admin" aria-label="Buscar billetera por conductor">
             <input type="hidden" name="tab" value="fondos" />
-            <div className="field-group single" style={{ flex: 1, marginBottom: 0 }}>
-              <label style={{ marginBottom: 0 }}>
-                <span className="sr-only">Clerk User ID del conductor</span>
-                <input
-                  name="driverId"
-                  aria-label="Clerk User ID del conductor"
-                  defaultValue={driverIdClean ?? ''}
-                  placeholder="Clerk user ID del conductor…"
-                  required
-                  style={{ width: '100%' }}
-                />
-              </label>
+            <div className="admin-cmd-bar" style={{ marginBottom: driverIdClean ? '2rem' : '0' }}>
+              <span className="cmd-prefix">⌕</span>
+              <input
+                name="driverId"
+                aria-label="Clerk User ID del conductor"
+                defaultValue={driverIdClean ?? ''}
+                placeholder="clerk user id del conductor…"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              {driverIdClean && (
+                <a href="/admin?tab=fondos" className="admin-cmd-clear" aria-label="Limpiar">✕</a>
+              )}
+              <button type="submit" className="cmd-btn">CONSULTAR →</button>
             </div>
-            <button type="submit" className="btn-primary" style={{ whiteSpace: 'nowrap' }}>
-              Ver billetera
-            </button>
-            {driverIdClean && (
-              <a href="/admin?tab=fondos" className="btn-ghost" style={{ whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
-                Limpiar
-              </a>
-            )}
           </form>
 
           {driverIdClean && (
@@ -189,25 +199,23 @@ export default async function AdminPage({
                   <>
                     <p className="balance-label">Pendiente de liquidar</p>
                     <p className="balance-amount">{fmt(Number(billetera.montoPendiente))}</p>
-                    <div style={{ display: 'flex', gap: '2.5rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
-                      <div>
-                        <p className="balance-label">Monto liquidado histórico</p>
-                        <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--muted)' }}>
-                          {fmt(Number(billetera.montoLiquidado))}
-                        </p>
-                      </div>
+                    <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
+                      <p className="balance-label">Liquidado histórico</p>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--muted)', marginTop: '0.2rem' }}>
+                        {fmt(Number(billetera.montoLiquidado))}
+                      </p>
                     </div>
                   </>
                 ) : (
                   <div className="empty-state" style={{ padding: '1.5rem 0' }}>
-                    <p>No hay billetera registrada para este conductor.</p>
+                    <p>Sin billetera registrada para este conductor.</p>
                   </div>
                 )}
               </div>
 
-              <h3 style={{ fontFamily: 'var(--font-fraunces)', fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem' }}>
+              <p style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                 Historial de liquidaciones
-              </h3>
+              </p>
               {liquidaciones.length === 0 ? (
                 <div className="glass-card empty-state"><p>Sin liquidaciones.</p></div>
               ) : (
@@ -223,7 +231,7 @@ export default async function AdminPage({
                     <tbody>
                       {liquidaciones.map((l) => (
                         <tr key={l.id}>
-                          <td style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>
+                          <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)' }}>
                             {l.fechaEjecutada ? fmtDate(l.fechaEjecutada) : '—'}
                           </td>
                           <td style={{ fontWeight: 600 }}>{fmt(Number(l.montoPagado))}</td>
@@ -242,52 +250,46 @@ export default async function AdminPage({
       {/* ── TRANSACCIONES ─────────────────────────────────────────────── */}
       {tab === 'transacciones' && (
         <>
-          <SectionHeader title="Transacciones por usuario" />
-          <form
-            method="GET"
-            action="/admin"
-            aria-label="Buscar transacciones por usuario"
-            style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', maxWidth: '520px' }}
-          >
+          <p style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
+            Historial por usuario
+          </p>
+          <form method="GET" action="/admin" aria-label="Buscar transacciones por usuario">
             <input type="hidden" name="tab" value="transacciones" />
-            <div className="field-group single" style={{ flex: 1, marginBottom: 0 }}>
-              <label style={{ marginBottom: 0 }}>
-                <span className="sr-only">Clerk User ID</span>
-                <input
-                  name="userId"
-                  aria-label="Clerk User ID del usuario"
-                  defaultValue={userIdClean ?? ''}
-                  placeholder="Clerk user ID (user_2abc123xyz…)"
-                  required
-                  style={{ width: '100%' }}
-                />
-              </label>
+            <div className="admin-cmd-bar" style={{ marginBottom: userIdClean ? '2rem' : '1rem' }}>
+              <span className="cmd-prefix">⌕</span>
+              <input
+                name="userId"
+                aria-label="Clerk User ID"
+                defaultValue={userIdClean ?? ''}
+                placeholder="clerk user id (user_2abc123xyz…)"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              {userIdClean && (
+                <a href="/admin?tab=transacciones" className="admin-cmd-clear" aria-label="Limpiar">✕</a>
+              )}
+              <button type="submit" className="cmd-btn">CONSULTAR →</button>
             </div>
-            <button type="submit" className="btn-primary" style={{ whiteSpace: 'nowrap' }}>
-              Ver transacciones
-            </button>
-            {userIdClean && (
-              <a href="/admin?tab=transacciones" className="btn-ghost" style={{ whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
-                Limpiar
-              </a>
-            )}
           </form>
 
           {!userIdClean && (
-            <p className="page-sub">Ingresá un Clerk ID para ver el historial del usuario.</p>
+            <p style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+              Ingresá un Clerk ID para ver el historial del usuario.
+            </p>
           )}
 
           {userIdClean && txs.length === 0 && (
-            <div className="glass-card empty-state"><p>No hay transacciones para este usuario.</p></div>
+            <div className="glass-card empty-state"><p>Sin transacciones para este usuario.</p></div>
           )}
 
           {userIdClean && txs.length > 0 && (
             <>
-              <p className="page-sub" style={{ marginBottom: '1rem' }}>
-                Usuario: <code style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{userIdClean}</code> — {total} registros
-              </p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <code style={{ fontSize: '0.75rem', color: 'var(--muted)', fontFamily: 'monospace' }}>{userIdClean}</code>
+                <span style={{ fontSize: '0.72rem', color: 'var(--muted)', letterSpacing: '0.06em' }}>— {total} registros</span>
+              </div>
               <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
-                <table className="data-table">
+                <table className="data-table" style={{ borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
                       <th>Fecha</th>
@@ -300,20 +302,18 @@ export default async function AdminPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {txs.map((tx) => (
-                      <tr key={tx.id}>
-                        <td style={{ color: 'var(--muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                    {txs.map((tx, i) => (
+                      <tr key={tx.id} style={i % 2 === 1 ? { background: 'rgba(255,255,255,0.015)' } : undefined}>
+                        <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
                           {fmtDate(tx.fechaCreacion)}
                         </td>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                        <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--muted)' }}>
                           {tx.idViaje.slice(0, 8)}…
                         </td>
                         <td style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
                           {tx.idPasajero === userIdClean ? 'Pasajero' : 'Conductor'}
                         </td>
-                        <td style={{ fontWeight: 600 }}>
-                          ${Number(tx.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })} {tx.moneda}
-                        </td>
+                        <td style={{ fontWeight: 600 }}>{fmt(Number(tx.monto))}</td>
                         <td>
                           <span style={{ fontSize: '0.8rem', color: tx.metodoPago === 'MERCADO_PAGO' ? 'var(--accent)' : 'var(--muted)' }}>
                             {tx.metodoPago === 'MERCADO_PAGO' ? 'Mercado Pago' : 'Efectivo'}
@@ -333,23 +333,25 @@ export default async function AdminPage({
 
               {totalPages > 1 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem', justifyContent: 'flex-end' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Página {page} de {totalPages}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+                    {page} / {totalPages}
+                  </span>
                   {page > 1 && (
                     <Link
                       href={`/admin?tab=transacciones&userId=${userIdClean}&page=${page - 1}`}
                       className="btn-ghost"
-                      style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}
+                      style={{ padding: '0.4rem 1rem', fontSize: '0.78rem', borderRadius: '0.4rem' }}
                     >
-                      ← Anterior
+                      ← anterior
                     </Link>
                   )}
                   {page < totalPages && (
                     <Link
                       href={`/admin?tab=transacciones&userId=${userIdClean}&page=${page + 1}`}
                       className="btn-ghost"
-                      style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}
+                      style={{ padding: '0.4rem 1rem', fontSize: '0.78rem', borderRadius: '0.4rem' }}
                     >
-                      Siguiente →
+                      siguiente →
                     </Link>
                   )}
                 </div>

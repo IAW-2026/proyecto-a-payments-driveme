@@ -364,6 +364,83 @@ select option { background: #0d1f3c; }
   margin-top: 1rem;
 }
 
+/* ─── Admin console ──────────────────────────────────────────────────────── */
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.admin-stat-panel {
+  background: var(--surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-top-width: 3px;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+}
+.admin-cmd-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  transition: border-color 0.2s;
+}
+.admin-cmd-bar:focus-within { border-color: rgba(0,229,180,0.5); }
+.admin-cmd-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+}
+.admin-cmd-bar input:focus { outline: none; border: none; }
+.admin-cmd-bar .cmd-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.85rem;
+  color: var(--muted);
+  font-size: 1rem;
+  user-select: none;
+  border-right: 1px solid var(--border);
+}
+.admin-cmd-bar .cmd-btn {
+  background: var(--accent);
+  color: #03100d;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  padding: 0 1.25rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.admin-cmd-bar .cmd-btn:hover { opacity: 0.88; }
+.admin-cmd-bar .cmd-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.admin-cmd-clear {
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  padding: 0 0.85rem;
+  border: none;
+  border-left: 1px solid var(--border);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.admin-cmd-clear:hover { color: var(--text); }
+@media (max-width: 600px) {
+  .admin-stat-grid { grid-template-columns: 1fr; }
+}
+
 /* ─── Animations ──────────────────────────────────────────────────────────── */
 @keyframes float-1 {
   0%, 100% { transform: translate(0,0) scale(1); }

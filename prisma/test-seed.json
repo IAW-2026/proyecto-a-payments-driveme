@@ -25,7 +25,6 @@
       "idConductor":       "user_dev_driver1",
       "metodoPago":        "EFECTIVO",
       "monto":             1200.00,
-      "moneda":            "ARS",
       "estado":            "CONFIRMADO",
       "estadoLiquidacion": "PENDIENTE"
     },
@@ -35,7 +34,6 @@
       "idConductor":       "user_dev_driver1",
       "metodoPago":        "EFECTIVO",
       "monto":             1800.00,
-      "moneda":            "ARS",
       "estado":            "CONFIRMADO",
       "estadoLiquidacion": "LIQUIDADO"
     },
@@ -45,7 +43,6 @@
       "idConductor":       "user_dev_driver1",
       "metodoPago":        "MERCADO_PAGO",
       "monto":             2200.00,
-      "moneda":            "ARS",
       "estado":            "PENDIENTE",
       "estadoLiquidacion": "PENDIENTE"
     },
@@ -55,7 +52,6 @@
       "idConductor":       "user_dev_driver2",
       "metodoPago":        "EFECTIVO",
       "monto":             3000.00,
-      "moneda":            "ARS",
       "estado":            "CONFIRMADO",
       "estadoLiquidacion": "PENDIENTE"
     },
@@ -65,7 +61,6 @@
       "idConductor":       "user_dev_driver2",
       "metodoPago":        "EFECTIVO",
       "monto":             2500.00,
-      "moneda":            "ARS",
       "estado":            "CONFIRMADO",
       "estadoLiquidacion": "PENDIENTE"
     },
@@ -75,7 +70,6 @@
       "idConductor":       "user_dev_driver2",
       "metodoPago":        "EFECTIVO",
       "monto":             500.00,
-      "moneda":            "ARS",
       "estado":            "CANCELADO",
       "estadoLiquidacion": "PENDIENTE"
     },
@@ -85,7 +79,6 @@
       "idConductor":       "user_dev_driver3",
       "metodoPago":        "EFECTIVO",
       "monto":             4000.00,
-      "moneda":            "ARS",
       "estado":            "CONFIRMADO",
       "estadoLiquidacion": "LIQUIDADO"
     },
@@ -95,7 +88,6 @@
       "idConductor":       "user_dev_driver3",
       "metodoPago":        "EFECTIVO",
       "monto":             1500.00,
-      "moneda":            "ARS",
       "estado":            "CONFIRMADO",
       "estadoLiquidacion": "LIQUIDADO"
     }

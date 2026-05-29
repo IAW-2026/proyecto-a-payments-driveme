@@ -4,8 +4,8 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
 const TABS = [
-  { key: 'fondos',        label: 'Panel Financiero' },
-  { key: 'transacciones', label: 'Transacciones' },
+  { key: 'fondos',        label: 'FONDOS' },
+  { key: 'transacciones', label: 'TRANSACCIONES' },
 ]
 
 export default function AdminNav() {
@@ -17,9 +17,13 @@ export default function AdminNav() {
       aria-label="Admin tabs"
       style={{
         display: 'flex',
-        borderBottom: '1px solid var(--border)',
-        marginBottom: '2rem',
-        gap: 0,
+        gap: '0.25rem',
+        marginBottom: '2.5rem',
+        padding: '0.25rem',
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid var(--border)',
+        borderRadius: '0.625rem',
+        width: 'fit-content',
       }}
     >
       {TABS.map(({ key, label }) => {
@@ -29,14 +33,16 @@ export default function AdminNav() {
             key={key}
             href={`/admin?tab=${key}`}
             style={{
-              padding: '0.75rem 1.75rem',
-              fontWeight: isActive ? 700 : 500,
-              fontSize: '0.9rem',
-              color: isActive ? 'var(--accent)' : 'var(--muted)',
-              borderBottom: isActive ? '2px solid var(--accent)' : '2px solid transparent',
+              padding: '0.5rem 1.25rem',
+              fontWeight: 700,
+              fontSize: '0.72rem',
+              letterSpacing: '0.1em',
+              color: isActive ? '#03100d' : 'var(--muted)',
+              background: isActive ? 'var(--accent)' : 'transparent',
+              borderRadius: '0.375rem',
               textDecoration: 'none',
-              marginBottom: '-1px',
-              transition: 'color 0.15s, border-color 0.15s',
+              transition: 'background 0.15s, color 0.15s',
+              whiteSpace: 'nowrap',
             }}
           >
             {label}

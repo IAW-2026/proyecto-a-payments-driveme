@@ -4,11 +4,9 @@ import { useState } from 'react'
 import UserIdSelect from './UserIdSelect'
 
 export default function SeedBilleteraForm() {
-  const [idConductor, setIdConductor]       = useState('')
-  const [montoPendiente, setMontoPendiente] = useState('0')
-  const [montoLiquidado, setMontoLiquidado] = useState('0')
-  const [loading, setLoading]               = useState(false)
-  const [msg, setMsg]                       = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [idConductor, setIdConductor] = useState('')
+  const [loading, setLoading]         = useState(false)
+  const [msg, setMsg]                 = useState<{ type: 'success' | 'info' | 'error'; text: string } | null>(null)
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()
@@ -18,15 +16,15 @@ export default function SeedBilleteraForm() {
       const res = await fetch('/api/pagos/admin/seed/billetera', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idConductor,
-          montoPendiente: Number(montoPendiente),
-          montoLiquidado: Number(montoLiquidado),
-        }),
+        body: JSON.stringify({ idConductor }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Error al crear billetera')
-      setMsg({ type: 'success', text: `Billetera creada/actualizada: ${data.id} · Pendiente: $${Number(data.montoPendiente).toFixed(2)}` })
+      if (data.alreadyExists) {
+        setMsg({ type: 'info', text: `Este conductor ya tiene una billetera (${data.billetera.id})` })
+      } else {
+        setMsg({ type: 'success', text: `Billetera creada: ${data.billetera.id}` })
+      }
     } catch (err: any) {
       setMsg({ type: 'error', text: err.message })
     } finally {
@@ -37,30 +35,23 @@ export default function SeedBilleteraForm() {
   return (
     <div className="glass-card">
       <form onSubmit={handleSubmit} aria-label="Seed billetera">
-        <div className="field-group single" style={{ marginBottom: '1rem' }}>
+        <div className="field-group single" style={{ marginBottom: '1.5rem' }}>
           <label>
             Conductor (Clerk)
             <UserIdSelect value={idConductor} onChange={setIdConductor} filterRol="DRIVER" required />
           </label>
         </div>
 
-        <div className="field-group" style={{ marginBottom: '1.5rem' }}>
-          <label>
-            Monto pendiente de liquidar
-            <input type="number" min="0" step="0.01" value={montoPendiente} onChange={e => setMontoPendiente(e.target.value)} />
-          </label>
-          <label>
-            Monto liquidado histórico
-            <input type="number" min="0" step="0.01" value={montoLiquidado} onChange={e => setMontoLiquidado(e.target.value)} />
-          </label>
-        </div>
-
         <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%' }}>
-          {loading ? 'Guardando…' : 'Crear / Actualizar Billetera'}
+          {loading ? 'Verificando…' : 'Crear Billetera'}
         </button>
       </form>
 
-      {msg && <p className={msg.type === 'success' ? 'msg-success' : 'msg-error'}>{msg.text}</p>}
+      {msg && (
+        <p className={msg.type === 'error' ? 'msg-error' : 'msg-success'}>
+          {msg.text}
+        </p>
+      )}
     </div>
   )
 }

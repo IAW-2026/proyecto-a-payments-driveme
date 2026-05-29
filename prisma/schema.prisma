@@ -55,7 +55,6 @@ model Transaccion {
   idConductor          String
   metodoPago           MetodoPago
   monto                Decimal             @db.Decimal(12, 2)
-  moneda               String              @default("ARS")
   estado               EstadoTransaccion   @default(PENDIENTE)
   estadoLiquidacion    EstadoLiquidacionTx @default(PENDIENTE)
   gatewayProvider      String?
@@ -93,7 +92,7 @@ model Liquidacion {
 }
 
 model BancoCentral {
-  id                       String   @id @default(uuid())
+  id                       String   @id @default("main")
   fondosEmpresa            Decimal  @default(0) @db.Decimal(12, 2)
   fondosADebitar           Decimal  @default(0) @db.Decimal(12, 2)
   fondosDebitadosHistorico Decimal  @default(0) @db.Decimal(12, 2)

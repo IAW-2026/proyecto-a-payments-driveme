@@ -2,19 +2,11 @@
 
 import { useAuth } from '@clerk/nextjs'
 import { SignInButton, SignUpButton } from '@clerk/nextjs'
-import Link from 'next/link'
 
 export default function CTAButtons() {
   const { isSignedIn } = useAuth()
 
-  if (isSignedIn) {
-    return (
-      <>
-        <Link href="/metodos" className="btn-primary">Mis métodos de pago</Link>
-        <Link href="/transacciones" className="btn-ghost">Ver transacciones</Link>
-      </>
-    )
-  }
+  if (isSignedIn) return null
 
   return (
     <>

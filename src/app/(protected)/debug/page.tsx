@@ -4,12 +4,11 @@ import { auth } from '@/lib/auth'
 import { getUserRole, Rol } from '@/lib/roles'
 import { redirect } from 'next/navigation'
 import DebugNav from './DebugNav'
+import SectionHeader from '@/components/SectionHeader'
 import SeedTransaccionForm from './SeedTransaccionForm'
 import SeedBilleteraForm from './SeedBilleteraForm'
-import SeedBancoForm from './SeedBancoForm'
 import QuickPreview from './QuickPreview'
 import RoleForm from './RoleForm'
-import UpdateBilleteraForm from './UpdateBilleteraForm'
 import ResetPanel from './ResetPanel'
 import TestPostTransaccionForm from './TestPostTransaccionForm'
 import TestPostLiquidacionForm from './TestPostLiquidacionForm'
@@ -21,23 +20,6 @@ export const metadata: Metadata = {
   title: 'Debug — DriveMe Payments',
   description: 'Panel de desarrollo y prueba de endpoints',
   robots: { index: false, follow: false },
-}
-
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <h2 style={{
-      fontFamily: 'var(--font-fraunces)',
-      fontSize: '1.1rem',
-      fontWeight: 700,
-      marginTop: '2.5rem',
-      marginBottom: '1rem',
-      paddingBottom: '0.5rem',
-      borderBottom: '1px solid var(--border)',
-      color: 'var(--gold)',
-    }}>
-      {title}
-    </h2>
-  )
 }
 
 export default async function DebugPage({
@@ -70,15 +52,9 @@ export default async function DebugPage({
 
           <SectionHeader title="Seed — Billetera del Conductor" />
           <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Crea o incrementa la billetera de un conductor directamente. Los montos se suman al estado actual.
+            Verifica si un conductor ya tiene billetera. Si no existe, la crea con saldo cero.
           </p>
           <SeedBilleteraForm />
-
-          <SectionHeader title="Seed — Banco Central" />
-          <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Incrementa los saldos del Banco Central (singleton). Útil para establecer un estado inicial antes de testear liquidaciones.
-          </p>
-          <SeedBancoForm />
 
           <SectionHeader title="Vista Rápida" />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
@@ -96,12 +72,6 @@ export default async function DebugPage({
             Asigna o modifica el rol de un usuario por su Clerk ID.
           </p>
           <RoleForm />
-
-          <SectionHeader title="Update — Billetera" />
-          <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Carga la billetera de un conductor y sobreescribe los montos. Los cambios se propagan al Banco Central.
-          </p>
-          <UpdateBilleteraForm />
         </>
       )}
 

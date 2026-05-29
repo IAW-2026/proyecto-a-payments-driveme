@@ -4,7 +4,7 @@ import { join } from 'path'
 import { prisma } from '@/lib/prisma'
 import { validateAdmin } from '@/lib/validators'
 
-type Target = 'transacciones' | 'billetera' | 'banco' | 'full' | 'reseed'
+type Target = 'transacciones' | 'billetera' | 'full' | 'reseed'
 
 async function resetTransacciones() {
   await prisma.$transaction([
@@ -51,22 +51,33 @@ export async function POST(req: Request) {
     case 'billetera': {
       const { idConductor } = body
       if (idConductor) {
-        await prisma.billetera.updateMany({
-          where: { idConductor },
-          data:  { montoPendiente: 0, montoLiquidado: 0 },
+        const wallet = await prisma.billetera.findUnique({
+          where:  { idConductor },
+          select: { montoPendiente: true },
         })
+        if (wallet) {
+          await prisma.$transaction([
+            prisma.billetera.updateMany({
+              where: { idConductor },
+              data:  { montoPendiente: 0, montoLiquidado: 0 },
+            }),
+            prisma.bancoCentral.upsert({
+              where:  { id: 'main' },
+              create: { id: 'main', fondosEmpresa: 0, fondosADebitar: 0, fondosDebitadosHistorico: 0 },
+              update: { fondosADebitar: { decrement: Number(wallet.montoPendiente) } },
+            }),
+          ])
+        }
       } else {
-        await prisma.billetera.updateMany({ data: { montoPendiente: 0, montoLiquidado: 0 } })
+        await prisma.$transaction([
+          prisma.billetera.updateMany({ data: { montoPendiente: 0, montoLiquidado: 0 } }),
+          prisma.bancoCentral.upsert({
+            where:  { id: 'main' },
+            create: { id: 'main', fondosEmpresa: 0, fondosADebitar: 0, fondosDebitadosHistorico: 0 },
+            update: { fondosADebitar: 0 },
+          }),
+        ])
       }
-      return NextResponse.json({ ok: true, target })
-    }
-
-    case 'banco': {
-      await prisma.bancoCentral.upsert({
-        where:  { id: 'main' },
-        create: { id: 'main', fondosEmpresa: 0, fondosADebitar: 0, fondosDebitadosHistorico: 0 },
-        update: { fondosEmpresa: 0, fondosADebitar: 0, fondosDebitadosHistorico: 0 },
-      })
       return NextResponse.json({ ok: true, target })
     }
 
@@ -128,7 +139,6 @@ export async function POST(req: Request) {
               idConductor:       tx.idConductor,
               metodoPago:        tx.metodoPago,
               monto:             tx.monto,
-              moneda:            tx.moneda ?? 'ARS',
               estado:            tx.estado ?? 'PENDIENTE',
               estadoLiquidacion: tx.estadoLiquidacion ?? 'PENDIENTE',
             },
@@ -137,7 +147,6 @@ export async function POST(req: Request) {
               idConductor:       tx.idConductor,
               metodoPago:        tx.metodoPago,
               monto:             tx.monto,
-              moneda:            tx.moneda ?? 'ARS',
               estado:            tx.estado ?? 'PENDIENTE',
               estadoLiquidacion: tx.estadoLiquidacion ?? 'PENDIENTE',
             },

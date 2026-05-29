@@ -1,18 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateAdmin } from '@/lib/validators'
+import { clerkId } from '@/lib/clerkId'
 
 const ESTADOS_VALIDOS = ['PENDIENTE', 'CONFIRMADO', 'CANCELADO']
 const CORTE = 0.10
 const NETO  = 0.90
-
-function clerkId(v: unknown): string {
-  if (v && typeof v === 'object' && 'id' in v) return String((v as any).id)
-  if (typeof v === 'string' && v.trimStart().startsWith('{')) {
-    try { const p = JSON.parse(v); if (p?.id) return String(p.id) } catch {}
-  }
-  return String(v ?? '')
-}
 
 export async function POST(req: Request) {
   if (!(await validateAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -20,7 +13,7 @@ export async function POST(req: Request) {
   const body = await req.json()
   const idPasajero  = clerkId(body.idPasajero)
   const idConductor = clerkId(body.idConductor)
-  const { idViaje, monto, moneda = 'ARS', estado = 'CONFIRMADO', metodoPago } = body
+  const { idViaje, monto, estado = 'CONFIRMADO', metodoPago } = body
 
   if (!idPasajero || !idConductor || !idViaje || monto == null || !metodoPago)
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -37,7 +30,6 @@ export async function POST(req: Request) {
       idConductor,
       metodoPago: metodoPago as any,
       monto,
-      moneda,
       estado: estado as any,
       estadoLiquidacion: 'PENDIENTE',
       gatewayProvider: 'seed',
@@ -49,7 +41,6 @@ export async function POST(req: Request) {
       idConductor,
       metodoPago: metodoPago as any,
       monto,
-      moneda,
       estado: estado as any,
     },
   })

@@ -2,21 +2,8 @@
 
 import { useState } from 'react'
 import UserIdSelect from './UserIdSelect'
-
-const BADGE_TX: Record<string, string> = {
-  CONFIRMADO: 'badge-captured',
-  PENDIENTE:  'badge-pending',
-  CANCELADO:  'badge-failed',
-}
-
-const BADGE_LIQ: Record<string, string> = {
-  PENDIENTE: 'badge-pending',
-  LIQUIDADO: 'badge-captured',
-}
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
-}
+import { fmtDateShort } from '@/lib/fmt'
+import { BADGE_TX, BADGE_LIQ } from '@/lib/badges'
 
 export default function MockGetTransaccionesForm() {
   const [userId, setUserId]       = useState('')
@@ -100,10 +87,10 @@ export default function MockGetTransaccionesForm() {
               <tbody>
                 {txs.map((tx: any) => (
                   <tr key={tx.id}>
-                    <td style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{fmtDate(tx.fechaCreacion)}</td>
+                    <td style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{fmtDateShort(tx.fechaCreacion)}</td>
                     <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--muted)' }}>{tx.idViaje?.slice(0, 8)}…</td>
                     <td style={{ fontWeight: 600 }}>
-                      ${Number(tx.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })} {tx.moneda}
+                      ${Number(tx.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })} ARS
                     </td>
                     <td style={{ fontSize: '0.8rem', color: tx.metodoPago === 'MERCADO_PAGO' ? 'var(--accent)' : 'var(--muted)' }}>
                       {tx.metodoPago === 'MERCADO_PAGO' ? 'Mercado Pago' : 'Efectivo'}
