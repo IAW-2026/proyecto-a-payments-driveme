@@ -50,6 +50,7 @@ export default function MockGetTransaccionesForm() {
         <select
           value={vista}
           onChange={e => setVista(e.target.value as 'DRIVER' | 'RIDER')}
+          aria-label="Vista del usuario"
           style={{ padding: '0 0.75rem', borderRadius: '0.75rem' }}
         >
           <option value="RIDER">Vista RIDER</option>

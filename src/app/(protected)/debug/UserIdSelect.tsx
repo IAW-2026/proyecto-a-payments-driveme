@@ -12,9 +12,12 @@ interface Props {
   required?: boolean
   placeholder?: string
   style?: React.CSSProperties
+  'aria-label'?: string
 }
 
-export default function UserIdSelect({ value, onChange, filterRol, required, placeholder, style }: Props) {
+export default function UserIdSelect({ value, onChange, filterRol, required, placeholder, style, 'aria-label': ariaLabel }: Props) {
+  const defaultLabel = filterRol === 'DRIVER' ? 'Conductor' : filterRol === 'RIDER' ? 'Pasajero' : 'Usuario'
+  const label = ariaLabel ?? defaultLabel
   const [users, setUsers] = useState<User[]>([])
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
@@ -34,6 +37,7 @@ export default function UserIdSelect({ value, onChange, filterRol, required, pla
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder="Cargando usuarios…"
+        aria-label={label}
         disabled
         style={style}
       />
@@ -46,6 +50,7 @@ export default function UserIdSelect({ value, onChange, filterRol, required, pla
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder ?? 'user_2…'}
+        aria-label={label}
         required={required}
         style={style}
       />
@@ -56,6 +61,7 @@ export default function UserIdSelect({ value, onChange, filterRol, required, pla
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
+      aria-label={label}
       required={required}
       style={{ fontFamily: 'monospace', fontSize: '0.85rem', ...style }}
     >
