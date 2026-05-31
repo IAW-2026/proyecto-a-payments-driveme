@@ -17,40 +17,67 @@ También identificar posibles duplicados entre apps (ej: usuarios) y definir có
 
 | Campo | Tipo de Dato | Reglas / Descripción |
 | :--- | :--- | :--- |
-| `id` | UUID / String | Primary Key interna. |
+| `id_conductor` | UUID / String | Primary Key interna (Clerk User ID). |
 | `nombre` | String | Nombre del conductor. |
 | `apellido` | String | Apellido del conductor. |
+| `licencia` | String | Único. Número de licencia del conductor. |
+| `fecha_alta` | Timestamp | Fecha de registro del conductor. Default: ahora. |
+| `fecha_baja` | Timestamp | Fecha de baja del conductor (opcional). |
 | `estado` | ENUM | `OFFLINE`, `ONLINE`, `OCUPADO`. |
-| `latitud_actual` | Decimal | Latitud de la última ubicación reportada. |
-| `longitud_actual` | Decimal | Longitud de la última ubicación reportada. |
-| `isActive` | Booleano | `TRUE`, `FALSE`.|
+| `meta_diaria` | Integer | Meta de ganancias diarias configurada por el conductor. Default 30000. |
+| `latitud_actual` | Float | Latitud de la última ubicación reportada (opcional). |
+| `longitud_actual` | Float | Longitud de la última ubicación reportada (opcional). |
+| `calificacion_promedio` | Float | Valor cacheado desde la Feedback App. Default 5.0. |
+| `isActive` | Booleano | `TRUE`, `FALSE`. Default `TRUE`.|
+
+## Entidad: Historial de Conexión
+
+| Campo | Tipo de Dato | Reglas / Descripción |
+| :--- | :--- | :--- |
+| `id_conexion` | UUID / String | Primary Key. Generado automáticamente. |
+| `id_conductor` | UUID / String | Foreign Key referenciando a `Conductor.id_conductor`. |
+| `estado` | String | Tipo de evento registrado (`ONLINE` u `OFFLINE`). |
+| `timestamp` | Timestamp | Fecha y hora exacta en la que en el conductor se puso online. Default: ahora. |
 
 ## Entidad: Vehículo
 
 | Campo | Tipo de Dato | Reglas / Descripción |
 | :--- | :--- | :--- |
-| `id` | UUID / String | Primary Key. |
-| `id_conductor` | UUID / String | Foreign Key referenciando a `Driver.id`. |
-| `número_patente` | String | Único. Patente del vehículo. |
+| `id_vehiculo` | UUID / String | Primary Key. |
+| `id_conductor` | UUID / String | Foreign Key referenciando a `Conductor.id_conductor`. |
+| `patente` | String | Único. Patente del vehículo. |
 | `marca` | String | Marca. |
 | `modelo` | String | Modelo. |
-| `color` | String | Color del auto. |
-| `año` | Integer | Año de fabricación. |
-| `isActive` | Booleano | `TRUE`, `FALSE`.|
+| `color` | String | Color del auto. Default "No especificado". |
+| `anio` | Integer | Año de fabricación. |
+| `fecha_baja` | Timestamp | Fecha de baja del vehículo (opcional). |
+| `isActive` | Booleano | `TRUE`, `FALSE`. Default `TRUE`.|
 
 ## Entidad: Viaje
 
 | Campo | Tipo de Dato | Reglas / Descripción |
 | :--- | :--- | :--- |
-| `id` | UUID / String | Primary Key. |
-| `id_solicitud` | String | ID de la solicitud original proveniente de la Rider App. |
-| `id_conductor` | UUID / String | Foreign Key referenciando a `Driver.id`. |
-| `estado_actual` | ENUM | `ACEPTADO`, `EN_CURSO`, `FINALIZADO`, `CANCELADO_POR_CONDUCTOR`. |
-| `tiempo_aceptado` | Timestamp | Fecha y hora en que el conductor aceptó el viaje. |
-| `tiempo_comienzo` | Timestamp | Fecha y hora en que el pasajero subió al vehículo. |
-| `tiempo_completado` | Timestamp | Fecha y hora en que finalizó el recorrido. |
-| `metodo_pago` | ENUM | `EFECTIVO`, `TARJETA`. Heredado de la solicitud inicial al aceptar el viaje. |
-| `precio_final` | Decimal | Costo final a enviar a la Payments App para el cobro. |
+| `id_viaje` | UUID / String | Primary Key. |
+| `estado` | String | Estado original del viaje (texto, no enum). Default "ACEPTADO". |
+| `precio` | Float | Costo inicial del viaje. |
+| `id_conductor` | UUID / String | Foreign Key referenciando a `Conductor.id_conductor`. |
+| `id_vehiculo` | UUID / String | Foreign Key referenciando a `Vehiculo.id_vehiculo`. |
+| `creado_en` | Timestamp | Fecha y hora de creación del registro. Default: ahora. |
+| `id_solicitud` | String | ID de la solicitud original proveniente de la Rider App (opcional, único). |
+| `id_pasajero` | String | Cacheado de la solicitud para no depender síncronamente de la Rider App (opcional). |
+| `estado_actual` | ENUM | `ACEPTADO`, `EN_CURSO`, `FINALIZADO`, `CANCELADO_POR_CONDUCTOR`. Default `ACEPTADO`. |
+| `tiempo_aceptado` | Timestamp | Fecha y hora en que el conductor aceptó el viaje. Default: ahora. |
+| `tiempo_comienzo` | Timestamp | Fecha y hora en que el pasajero subió al vehículo (opcional). |
+| `tiempo_completado` | Timestamp | Fecha y hora en que finalizó el recorrido (opcional). |
+| `metodo_pago` | ENUM | `EFECTIVO`, `TARJETA`. Heredado de la solicitud inicial al aceptar el viaje. Default `EFECTIVO`. |
+| `precio_final` | Float | Costo final a enviar a la Payments App para el cobro. Default 0. |
+| `origen_direccion` | String | Dirección de origen persistida (opcional). |
+| `origen_latitud` | Float | Latitud de origen persistida (opcional). |
+| `origen_longitud` | Float | Longitud de origen persistida (opcional). |
+| `destino_direccion` | String | Dirección de destino persistida (opcional). |
+| `destino_latitud` | Float | Latitud de destino persistida (opcional). |
+| `destino_longitud` | Float | Longitud de destino persistida (opcional). |
+| `pasajero_nombre` | String | Nombre del pasajero cacheado (opcional). |
 
 ---
 
@@ -105,61 +132,76 @@ También identificar posibles duplicados entre apps (ej: usuarios) y definir có
 
 ### Entidades principales
 
-<!-- Describir tablas y campos -->
+## Entidad: Usuario
 
-## Entidad: Método de Pago
+Espejo local del usuario de Clerk. Se crea al primer login y sirve de ancla para las relaciones internas.
 
-| Campo              | Tipo de Dato | Reglas / Descripción 
-|------------------  |--------------|------------------------
-| id                 | UUID/String  | Primary Key.
-| id_usuario         | UUID/String  | FK al usuario (Pasajero) No contiene credenciales.
-| tipo               | ENUM         | `TARJETA`, `EFECTIVO`, `...`
-| token              | String       | Tokenizado por el gateway (identificador seguro del medio).
-| gateway_provider   | String       | Nombre del proveedor
-| fecha_creacion     | Timestamp    | Fecha de creación del método.
+| Campo          | Tipo de Dato | Reglas / Descripción                                      |
+|----------------|--------------|-----------------------------------------------------------|
+| `id`           | String       | Primary Key. Coincide con el `sub` de Clerk.             |
+| `rol`          | ENUM         | `RIDER`, `DRIVER`, `ADMIN`. Default `RIDER`.             |
+| `fecha_creacion` | Timestamp  | Fecha de creación del registro. Default: ahora.          |
 
-## Entidad: Tarjeta
+## Entidad: Transaccion
 
-| Campo                 | Tipo de Dato   | Reglas / Descripción 
-|--------------------   |----------------|------------------------
-| id_tarjeta            | UUID/String    | Primary Key (opcional si se usa `Método de Pago.id`).
-| metodo_pago_id        | UUID/String    | FK a `Método de Pago.id`.
-| numero_enmascarado    | String         | PAN enmascarado para UI/identificación.
-| marca_tarjeta         | String         | `VISA`, `MASTERCARD`, etc.
-| mes_vencimiento       | Integer        | 1-12.
-| año_vencimiento       | Integer        | Año en 4 dígitos.
-| nombre_titular        | String         | Nombre del dueño en la tarjeta.
-| direccion_facturacion | UUID/String    | FK a tabla de direcciones (si aplica).
-| fecha_agregado        | Timestamp      | Fecha en que se agregó la tarjeta.
+Registra cada cobro realizado al finalizar un viaje. El método de pago es un campo directo (no una tabla separada): `EFECTIVO` se resuelve de forma síncrona y `MERCADO_PAGO` de forma asíncrona vía webhook.
 
-## Entidad: Transacción
+| Campo                   | Tipo de Dato | Reglas / Descripción                                                               |
+|-------------------------|--------------|------------------------------------------------------------------------------------|
+| `id`                    | UUID/String  | Primary Key. Generado automáticamente.                                            |
+| `id_viaje`              | String       | Único. FK lógica al `Viaje.id` en la Driver App.                                  |
+| `id_pasajero`           | String       | Clerk User ID del pasajero. Sin FK rígida a `Usuario`.                            |
+| `id_conductor`          | String       | Clerk User ID del conductor. Sin FK rígida a `Usuario`.                           |
+| `metodo_pago`           | ENUM         | `EFECTIVO`, `MERCADO_PAGO`.                                                        |
+| `monto`                 | Decimal(12,2)| Monto cobrado.                                                                     |
+| `estado`                | ENUM         | `PENDIENTE`, `CONFIRMADO`, `CANCELADO`. Default `PENDIENTE`.                      |
+| `estado_liquidacion`    | ENUM         | `PENDIENTE`, `LIQUIDADO`. Default `PENDIENTE`. Indica si ya fue incluida en una liquidación al conductor. |
+| `gateway_provider`      | String?      | Nombre del proveedor (p.ej. `MERCADO_PAGO`). Nulo para EFECTIVO.                 |
+| `gateway_transaction_id`| String?      | ID de la operación en el gateway. Nulo para EFECTIVO.                             |
+| `detalle_gateway`       | JSON?        | Respuesta completa del gateway para auditoría.                                    |
+| `fecha_creacion`        | Timestamp    | Fecha de la operación. Default: ahora.                                            |
+| `fecha_actualizacion`   | Timestamp    | Última actualización de estado. Auto-actualizado.                                 |
 
-| Campo                  | Tipo de Dato | Reglas / Descripción 
-|------------------      |----------------|------------------------
-| id_transaccion         | UUID/String | Primary Key.
-| id_metodo_pago         | UUID/String | FK a `Método de Pago.id`.
-| id_viaje               | UUID/String | FK al `Viaje.id` (si aplica).
-| monto                  | Decimal     | Monto cobrado.
-| moneda                 | String      | ISO 4217 (p.ej. `USD`, `ARS`).
-| estado                 | ENUM        | `PENDING`, `AUTHORIZED`, `CAPTURED`, `FAILED`, `REFUNDED`, `CANCELED`.
-| gateway_provider       | String      | Nombre del proveedor (Stripe, Adyen, etc.).
-| gateway_transaction_id | String      | ID de la transacción en el gateway.
-| detalle_gateway        | JSON        | Respuesta/errores completos del gateway (para auditoría).
-| fecha_creacion         | Timestamp   | Fecha de la operación.
-| fecha_actualizacion    | Timestamp   | Última actualización de estado.
+## Entidad: Billetera
 
-## Entidad: Reembolso
+Saldo acumulado del conductor en la plataforma. Se actualiza cada vez que una `Transaccion` pasa a `CONFIRMADO`.
 
-| Campo             | Tipo de Dato| Reglas / Descripción 
-|------------------ |-------------|------------------------
-| id_reembolso      | UUID/String | Primary Key.
-| id_transaccion    | UUID/String | FK a `Transacción.id_transaccion`.
-| monto             | Decimal     | Monto a reembolsar (puede ser parcial).
-| estado            | ENUM        | `PENDING`, `COMPLETED`, `FAILED`, `REVERSED`.
-| razon             | String      | Motivo del reembolso.
-| gateway_refund_id | String      | ID del reembolso en el gateway.
-| fecha_solicitud   | Timestamp   | Fecha en que se solicitó el reembolso.
-| fecha_actualizacion  | Timestamp   | Fecha en que se modifico por ultima vez
+| Campo               | Tipo de Dato  | Reglas / Descripción                                                  |
+|---------------------|---------------|-----------------------------------------------------------------------|
+| `id`                | UUID/String   | Primary Key.                                                          |
+| `id_conductor`      | String        | Único. Clerk User ID del conductor dueño de la billetera.            |
+| `monto_pendiente`   | Decimal(12,2) | Fondos confirmados aún no liquidados. Default `0`.                   |
+| `monto_liquidado`   | Decimal(12,2) | Total histórico transferido al conductor. Default `0`.               |
+| `fecha_creacion`    | Timestamp     | Fecha de creación. Default: ahora.                                   |
+| `fecha_actualizacion` | Timestamp   | Última actualización. Auto-actualizado.                              |
+
+## Entidad: Liquidacion
+
+Representa una transferencia programada de fondos desde la plataforma hacia un conductor.
+
+| Campo               | Tipo de Dato  | Reglas / Descripción                                                  |
+|---------------------|---------------|-----------------------------------------------------------------------|
+| `id`                | UUID/String   | Primary Key.                                                          |
+| `id_conductor`      | String        | Clerk User ID del conductor beneficiario.                            |
+| `monto_pagado`      | Decimal(12,2) | Monto total de esta liquidación.                                     |
+| `estado`            | ENUM          | `PENDIENTE`, `PROCESADA`, `FALLIDA`. Default `PENDIENTE`.            |
+| `fecha_programada`  | Timestamp     | Fecha en que debe ejecutarse la transferencia.                       |
+| `fecha_ejecutada`   | Timestamp?    | Fecha en que se ejecutó efectivamente (opcional).                    |
+| `detalle`           | JSON?         | Metadatos o respuesta del procesador de pagos.                       |
+| `fecha_creacion`    | Timestamp     | Default: ahora.                                                       |
+| `fecha_actualizacion` | Timestamp   | Auto-actualizado.                                                     |
+
+## Entidad: BancoCentral
+
+Registro único (singleton, `id = "main"`) que lleva la contabilidad interna de los fondos de la empresa.
+
+| Campo                      | Tipo de Dato  | Reglas / Descripción                                                      |
+|----------------------------|---------------|---------------------------------------------------------------------------|
+| `id`                       | String        | Primary Key. Valor fijo `"main"` — solo existe una fila.                 |
+| `fondos_empresa`           | Decimal(12,2) | Saldo disponible de la empresa (comisiones cobradas). Default `0`.       |
+| `fondos_a_debitar`         | Decimal(12,2) | Total pendiente de liquidar a conductores. Default `0`.                  |
+| `fondos_debitados_historico` | Decimal(12,2)| Acumulado histórico de liquidaciones ejecutadas. Default `0`.           |
+| `fecha_actualizacion`      | Timestamp     | Auto-actualizado en cada operación contable.                             |
 
 ---
 
@@ -168,7 +210,7 @@ También identificar posibles duplicados entre apps (ej: usuarios) y definir có
 ### Entidades principales
 
 <!-- Describir tablas y campos -->
-- Entidad: Calificacion /*Lo hice de la forma unificada, depende de lo que me digan (si es unificada o separada) en la consulta debo modificarlo*/
+- Entidad: Calificacion 
 
 | Campo | Tipo de Dato | Reglas / Descripción |
 | :--- | :--- | :--- |
@@ -179,19 +221,21 @@ También identificar posibles duplicados entre apps (ej: usuarios) y definir có
 | puntaje | Integer | Valor de 1 a 5. |
 | comentario | String | Reseña opcional del usuario. |
 | fecha | Timestamp | Fecha de creación de la calificación. |
+| isActive | Booleano | `TRUE`, `FALSE`. Permite deshabilitar o inhabilitar calificaciones. |
 
 - Entidad: Reporte
 
 | Campo | Tipo de Dato | Reglas / Descripción |
 | :--- | :--- | :--- |
 | `id_reporte` | UUID  | Primary Key. |
-| `id_calificacion` | UUID  | Identificador de calificacion.  |
+| `id_calificacion` | UUID  | Identificador de calificacion. |
 | `id_reportante` | UUID  | Usuario que realiza el reporte. |
 | `id_reportado` | UUID  | Usuario que recibe el reporte. |
 | `motivo` | String | Descripción del motivo del reporte. |
+| `descripcion` | String | Texto libre con más detalle del reporte. |
 | `estado` | ENUM | `PENDIENTE`, `APROBADO`, `RECHAZADO`. |
-| `isActive` | Booleano | `TRUE`, `FALSE`.| /** es un "soft delete" de la BD, sirve para "eliminar" cosas que estan relacionadas con otras. Si yo elimino esto con un delete entonces deberia eliminar todo lo que este relacionado con esto. Con esta modificacion no hago esto, solo lo inhabilito y listo.**/
-
+| `fecha` | Timestamp | Fecha de creación/modificacion del reporte. |
+| `isActive` | Booleano | `TRUE`, `FALSE`. Permite deshabilitar o inhabilitar reportes. |
 
 
 <!-->

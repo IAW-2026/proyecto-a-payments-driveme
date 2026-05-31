@@ -13,7 +13,8 @@ Microservicio de pagos del proyecto DriveMe (IAW 2026). Gestiona transacciones, 
 ### Administrador
 
 - **URL:** `https://proyecto-a-payments-driveme.vercel.app/admin`
-- **Credenciales de demo:** 
+- **Credenciales de demo:**
+- **USER/PASSWORD:** TEACHERTEST/THISISATESTACCOUNT
 - El panel de administración permite ver el estado del Banco Central, buscar billeteras de conductores y revisar el historial de transacciones con paginación.
 
 ### Usuarios de prueba (entorno de desarrollo)

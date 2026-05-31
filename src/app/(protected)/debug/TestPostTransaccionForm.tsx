@@ -3,7 +3,11 @@
 import { useState } from 'react'
 import UserIdSelect from './UserIdSelect'
 
-export default function TestPostTransaccionForm() {
+interface Props {
+  onCreada?: (id: string, metodoPago: string) => void
+}
+
+export default function TestPostTransaccionForm({ onCreada }: Props) {
   const [idViaje, setIdViaje]         = useState(() => crypto.randomUUID())
   const [idPasajero, setIdPasajero]   = useState('')
   const [idConductor, setIdConductor] = useState('')
@@ -34,6 +38,7 @@ export default function TestPostTransaccionForm() {
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
       setResult(data)
       setMsg({ type: 'success', text: `Transacción creada: ${data.id_transaccion}` })
+      onCreada?.(data.id_transaccion, metodoPago)
       setIdViaje(crypto.randomUUID())
     } catch (err: any) {
       setMsg({ type: 'error', text: err.message })

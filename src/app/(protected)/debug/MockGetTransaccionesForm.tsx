@@ -4,6 +4,7 @@ import { useState } from 'react'
 import UserIdSelect from './UserIdSelect'
 import { fmtDateShort } from '@/lib/fmt'
 import { BADGE_TX, BADGE_LIQ } from '@/lib/badges'
+import CopyButton from '@/components/CopyButton'
 
 export default function MockGetTransaccionesForm() {
   const [userId, setUserId]       = useState('')
@@ -78,6 +79,7 @@ export default function MockGetTransaccionesForm() {
               <thead>
                 <tr>
                   <th>Fecha</th>
+                  <th>TX ID</th>
                   <th>Viaje</th>
                   <th>Monto</th>
                   <th>Método</th>
@@ -89,6 +91,7 @@ export default function MockGetTransaccionesForm() {
                 {txs.map((tx: any) => (
                   <tr key={tx.id}>
                     <td style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{fmtDateShort(tx.fechaCreacion)}</td>
+                    <td><CopyButton value={tx.id} /></td>
                     <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--muted)' }}>{tx.idViaje?.slice(0, 8)}…</td>
                     <td style={{ fontWeight: 600 }}>
                       ${Number(tx.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })} ARS

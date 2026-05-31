@@ -1,10 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-export default function TestPutTransaccionForm() {
-  const [idTransaccion, setIdTransaccion] = useState('')
-  const [perspectiva, setPerspectiva]     = useState<'DRIVER' | 'RIDER'>('DRIVER')
+interface Props {
+  defaultIdTransaccion?: string
+  defaultPerspectiva?: 'DRIVER' | 'RIDER'
+}
+
+export default function TestPutTransaccionForm({ defaultIdTransaccion = '', defaultPerspectiva = 'DRIVER' }: Props) {
+  const [idTransaccion, setIdTransaccion] = useState(defaultIdTransaccion)
+  const [perspectiva, setPerspectiva]     = useState<'DRIVER' | 'RIDER'>(defaultPerspectiva)
+
+  useEffect(() => { if (defaultIdTransaccion) setIdTransaccion(defaultIdTransaccion) }, [defaultIdTransaccion])
+  useEffect(() => { setPerspectiva(defaultPerspectiva) }, [defaultPerspectiva])
   const [loading, setLoading]             = useState(false)
   const [result, setResult]               = useState<any>(null)
   const [msg, setMsg]                     = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -86,6 +94,18 @@ export default function TestPutTransaccionForm() {
       </form>
 
       {msg && <p className={msg.type === 'success' ? 'msg-success' : 'msg-error'}>{msg.text}</p>}
+
+      {result?.init_point && (
+        <a
+          href={result.init_point}
+          target="_blank"
+          rel="noreferrer"
+          className="btn-primary"
+          style={{ display: 'block', textAlign: 'center', marginTop: '1rem', textDecoration: 'none' }}
+        >
+          Pagar con Mercado Pago →
+        </a>
+      )}
 
       {result && (
         <pre style={{

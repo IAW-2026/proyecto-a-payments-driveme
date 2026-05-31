@@ -1,8 +1,15 @@
-import { auth } from '@/lib/auth'
-import { getUserRole, Rol } from '@/lib/roles'
+import { auth, clerkClient } from '@/lib/auth'
+import { getUserRole, ensureUser, Rol } from '@/lib/roles'
 import { resolveUser } from '@/lib/user-resolver'
 
 export type CallerUser = { id: string; rol: Rol; isTest: boolean }
+
+function clerkRoleToRol(raw: unknown): Rol {
+  const s = (typeof raw === 'string' ? raw : '').toUpperCase()
+  if (s === 'DRIVER') return Rol.DRIVER
+  if (s === 'ADMIN')  return Rol.ADMIN
+  return Rol.RIDER
+}
 
 export async function resolveCallerUser(req: Request): Promise<CallerUser | null> {
   if (process.env.NODE_ENV !== 'production') {
@@ -15,8 +22,21 @@ export async function resolveCallerUser(req: Request): Promise<CallerUser | null
 
   const { userId } = await auth()
   if (!userId) return null
-  const rol = await getUserRole(userId)
-  if (!rol) return null
+
+  let rol = await getUserRole(userId)
+
+  if (!rol) {
+    // Authenticated in Clerk but missing from DB (e.g. webhook missed at signup).
+    // Lazy-upsert using the role stored in their Clerk publicMetadata.
+    try {
+      const clerk    = await clerkClient()
+      const clerkUser = await clerk.users.getUser(userId)
+      rol = await ensureUser(userId, clerkRoleToRol(clerkUser.publicMetadata?.role))
+    } catch {
+      return null
+    }
+  }
+
   return { id: userId, rol, isTest: false }
 }
 

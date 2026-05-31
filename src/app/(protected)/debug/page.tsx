@@ -9,10 +9,9 @@ import SeedTransaccionForm from './SeedTransaccionForm'
 import SeedBilleteraForm from './SeedBilleteraForm'
 import QuickPreview from './QuickPreview'
 import RoleForm from './RoleForm'
+import SyncClerkUsersForm from './SyncClerkUsersForm'
 import ResetPanel from './ResetPanel'
-import TestPostTransaccionForm from './TestPostTransaccionForm'
-import TestPostLiquidacionForm from './TestPostLiquidacionForm'
-import TestPutTransaccionForm from './TestPutTransaccionForm'
+import EndpointsTab from './EndpointsTab'
 import MockGetTransaccionesForm from './MockGetTransaccionesForm'
 import MockGetLiquidacionesForm from './MockGetLiquidacionesForm'
 
@@ -67,6 +66,13 @@ export default async function DebugPage({
       {/* ── UPDATE ────────────────────────────────────────────────────── */}
       {tab === 'update' && (
         <>
+          <SectionHeader title="Sincronización Clerk → DB" />
+          <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+            Registra en la DB los usuarios que iniciaron sesión en Clerk pero no tienen fila en <code>usuarios</code>.
+            Útil cuando el webhook <code>user.created</code> no estaba configurado al momento del registro.
+          </p>
+          <SyncClerkUsersForm />
+
           <SectionHeader title="Roles de Usuario" />
           <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
             Asigna o modifica el rol de un usuario por su Clerk ID.
@@ -87,27 +93,7 @@ export default async function DebugPage({
       )}
 
       {/* ── ENDPOINTS ─────────────────────────────────────────────────── */}
-      {tab === 'endpoints' && (
-        <>
-          <SectionHeader title="POST /api/pagos/transacciones — crear transacción (Rider)" />
-          <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Simula la llamada de la Rider App. El servidor usa <code>RIDER_SERVICE_SECRET</code> internamente — idéntico a lo que enviaría la app real.
-          </p>
-          <TestPostTransaccionForm />
-
-          <SectionHeader title="PUT /api/pagos/transacciones — procesar transacción" />
-          <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            El servidor usa <code>DRIVER_SERVICE_SECRET</code> o <code>RIDER_SERVICE_SECRET</code> según la perspectiva seleccionada — idéntico a lo que enviaría la app real.
-          </p>
-          <TestPutTransaccionForm />
-
-          <SectionHeader title="POST /api/pagos/liquidaciones — liquidar conductor (Driver)" />
-          <p className="page-sub" style={{ marginTop: '-0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-            Llama directamente al endpoint de producción como lo haría la Driver App para solicitar su pago.
-          </p>
-          <TestPostLiquidacionForm />
-        </>
-      )}
+      {tab === 'endpoints' && <EndpointsTab />}
 
       {/* ── MOCKS GET ─────────────────────────────────────────────────── */}
       {tab === 'mocks' && (

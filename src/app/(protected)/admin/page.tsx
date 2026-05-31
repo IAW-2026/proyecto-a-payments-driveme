@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma'
 import AdminNav from './AdminNav'
 import { fmt, fmtDate } from '@/lib/fmt'
 import { BADGE_TX, BADGE_LIQ, BADGE_L } from '@/lib/badges'
+import CopyButton from '@/components/CopyButton'
 
 export const metadata: Metadata = {
   title: 'Admin — DriveMe Payments',
@@ -293,6 +294,7 @@ export default async function AdminPage({
                   <thead>
                     <tr>
                       <th>Fecha</th>
+                      <th>TX ID</th>
                       <th>Viaje</th>
                       <th>Rol</th>
                       <th>Monto</th>
@@ -307,6 +309,7 @@ export default async function AdminPage({
                         <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
                           {fmtDate(tx.fechaCreacion)}
                         </td>
+                        <td><CopyButton value={tx.id} /></td>
                         <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--muted)' }}>
                           {tx.idViaje.slice(0, 8)}…
                         </td>

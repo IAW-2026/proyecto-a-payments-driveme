@@ -26,20 +26,22 @@
 <!-- Entidades que viven en la base de datos de esta app -->
 - Pasajero (id_pasajero, nombre, email, teléfono, rating_promedio)
 - DirecciónFrecuente: (id_dir, id_pasajero, nombreVivienda, coordenadas)
-- SolicitudDeViaje(id_solicitud, id_pasajero, origen, destino, precio_estimado, estado). En estado de busqueda (sin conductor asignado), el pasajero puede cancelarla desde Rider App.
+- SolicitudDeViaje(id_solicitud, id_pasajero, origen, destino, precio_estimado, estado). En estado de busqueda (sin conductor asignado), el pasajero puede cancelarla desde Rider App. Si el timer de búsqueda (2 minutos) vence sin que ningún conductor acepte, el frontend de Rider App dispara automáticamente un PATCH que transiciona la solicitud a `EXPIRADA_SIN_ACEPTACION`.
 - Viaje (id_viaje, id_solicitud, id_conductor, estado_actual). Este dato en Rider es de lectura/visualización para el pasajero y no define transiciones de estado.
 
 ### Payments App
 <!-- Entidades que viven en la base de datos de esta app -->
-- Metodo de Pago (id, gateway_provider, tipo, token)
-- Tarjeta (id_tarjeta, numero_enmascarado, marca_tarjeta, mes_vencimiento, año_vencimiento, nombre_titular, direccion_facturacion, fecha_creacion)
-- Transacciones  (id_transaccion, monto, moneda, estado, gateway-provider, gateway_transaction_id, gateway_detail, fecha_realizada, fecha_actualizacion)
-- Reembolso (id_reembolso, monto, estado, razon, gateway_refund_id, fecha_solicitud, fecha_actualizacion)
+- Usuario (id, rol) /*id = Clerk user_id rol: RIDER | DRIVER | ADMIN*/
+- Transaccion (id_transaccion, id_viaje, id_pasajero, id_conductor, metodo_pago, monto, estado, estado_liquidacion, gateway_provider, gateway_transaction_id, detalle_gateway, fecha_creacion, fecha_actualizacion) /*metodo_pago: EFECTIVO | MERCADO_PAGO. estado: PENDIENTE | CONFIRMADO | CANCELADO. estado_liquidacion: PENDIENTE | LIQUIDADO*/
+- Billetera (id, id_conductor, monto_pendiente, monto_liquidado, fecha_creacion, fecha_actualizacion) /*una por conductor; monto_pendiente = fondos disponibles para liquidar (90% de viajes confirmados)*/
+- Liquidacion (id_liquidacion, id_conductor, monto_pagado, estado, fecha_programada, fecha_ejecutada, detalle, fecha_creacion, fecha_actualizacion) /*estado: PENDIENTE | PROCESADA | FALLIDA. Se crea cada vez que un conductor cobra sus fondos acumulados*/
+- BancoCentral (id, fondos_empresa, fondos_a_debitar, fondos_debitados_historico, fecha_actualizacion) /*singleton (id = "main"); fondos_empresa = 10% acumulado de cada viaje; fondos_a_debitar = 90% pendiente de pagar a conductores*/
 
 ### Feedback App
 <!-- Entidades que viven en la base de datos de esta app -->
-- Calificacion (id_calificacion, id_viaje, id_emisor, id_receptor, puntaje, comentario, isActive) /isActive: TRUE, FALSE. es para poder deshabilitar calificaciones/
-- Reporte (id_reporte, id_reportante, id_reportado, motivo, estado) /Estado: PENDING, APPROVED, REJECTED. id_calificacion para ver que calificacion reporto./
+- Calificacion (id_calificacion, id_viaje, id_emisor, id_receptor, puntaje, comentario, fecha, isActive) /isActive: TRUE, FALSE. es para poder deshabilitar calificaciones/
+- Reporte (id_reporte, id_calificacion, id_reportante, id_reportado, motivo, descripcion, estado, isActive) /Estado: PENDING, APPROVED, REJECTED. id_calificacion para ver qué calificación reportó./
+
 
 <!-- Entidades que viven en la base de datos de esta app --> 
 
@@ -56,7 +58,7 @@
 | Rider App     | Consultar telemetría del viaje                                 | Driver App  | GET /api/viajes/{id_viaje}/telemetria           |
 | Driver App    | Actualizar estado del viaje (inicio/fin)                       | Driver App  | PATCH /api/viajes/{id_viaje}/estado             |
 | Driver App    | Cancelar viaje ya aceptado (solo Conductor)                    | Driver App  | PATCH /api/viajes/{id_viaje}                    |
-| Driver App    | Finalizar viaje y procesar pago                                | Payments App| POST /api/pagos/transacciones                   |
+| Driver App    | Finalizar viaje y procesar pago                                | Payments App| POST /api/pagos/procesar                        |
 | Rider App     | Enviar calificación del conductor                              | Feedback App| POST /api/resenas                               |
 | Driver App    | Enviar calificación del pasajero                               | Feedback App| POST /api/resenas                               |
 | Rider App     | Cancelar solicitud en búsqueda (solo Pasajero)                 | Rider App   | PATCH /api/solicitudes/{id_solicitud}           |

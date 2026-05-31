@@ -51,7 +51,7 @@ export default function Home() {
       <section className="features">
         {FEATURES.map((f) => (
           <Link key={f.href} href={f.href} className="feature-card" style={{ textDecoration: 'none' }}>
-            <div className="feature-icon">{f.icon}</div>
+            <div className="feature-icon" aria-hidden="true">{f.icon}</div>
             <h2 style={{ fontSize: '1rem', fontWeight: 700 }}>{f.title}</h2>
             <p>{f.desc}</p>
           </Link>
