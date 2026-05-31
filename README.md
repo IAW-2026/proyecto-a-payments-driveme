@@ -10,6 +10,11 @@ Microservicio de pagos del proyecto DriveMe (IAW 2026). Gestiona transacciones, 
 
 ## Acceso
 
+El usuario final es administador, nadie mas debe tener acceso a esta app ya que el proposito de la misma es servir
+de un centro de aministracion en la cual el usuario final pueda tener acceso a la informacion privilegiada de los 
+conductores y/o pasajeros para poder evaluar transacciones, funcionamiento de pagos, billeteras de conductores y 
+liquidaciones a conductores lo que obviamente, no deberia ser accedido por un Rider o Driver
+
 ### Administrador
 
 - **URL:** `https://proyecto-a-payments-driveme.vercel.app/admin`
@@ -36,7 +41,20 @@ Para llamar a los endpoints API como un usuario de prueba, agregar el header:
 x-dev-user-id: user_dev_driver1
 ```
 
+### DEBUG
+
+- **URL:** `https://proyecto-a-payments-driveme.vercel.app/debug`
+Solo pueden acceder los admin, es para poder testear de forma correcta, posee un NAV que te deja hacer seed, manejar roles, llamar endpoints para testear y probar los MOCKS de los get. Finalmente tambien cuenta con la opcion de cargar la seed de prueba desde test-seed.json lo cual agrega el seed base, ademas tenes otras opciones para eliminar el seed volverlo a cargar y podes manipular la base de datos a voluntad basicamente sin necesidad de entrar a Supabase, se realizo con la idea de que se pueda debugear todo de forma correcta sin tenes que "limpiar" la db luego de cada prueba manualmente. Su enfoque esta basado en una idea de QOL (Quality Of Life) para el Tester.
 ---
+
+### MERCADO PAGO
+Haciendo uso de los endpoints crear transaccion y procesar transaccion podremos empezar a utilizar mercado pago sandbox, al crear la transaccion con el endpoint "simulamos ser el rider" y automaticamente el id de la transaccion se pega en la casilla procesar transaccion, en la misma seleccionamos "Que somos" (Rider para mercado pago y Driver para efectivo) ya que 
+el PUT se realiza por distinto actor (Driver/Rider) segun el metodo de pago y eso cambia la logica y al apretar el boton
+se creara el init_point para pagar en Mercado Pago Sandbox, tener en cuenta para mercado pago que:
+
+1-Todas las credenciales deben ser de prueba
+2-Se recomienda fuertemente ingresar desde incognito a la app para evitar cualquier problema, loguear con un user de prueba y agregar tarjeta de prueba para realizar el pago y cambiando solo el nombre de titular probar todas las distintas posiblidades de estados o resultados del pago.
+
 
 ## Stack
 
@@ -80,3 +98,5 @@ ________________________________________________________________________________
 | `/api/pagos/liquidaciones` | GET    | Driver App         | Resumen de billetera y liquidaciones       |
 | `/api/webhooks/mercadopago`| POST   | Mercado Pago       | Notificación de pago (IPN)                 |
 |_______________________________________________________________________________________________________|
+
+##
