@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth'
 import { getUserRole, Rol } from '@/lib/roles'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { EstadoTransaccion } from '@/generated/prisma/client'
 import AdminNav from './AdminNav'
 import { fmt, fmtDate } from '@/lib/fmt'
 import { BADGE_TX, BADGE_LIQ, BADGE_L } from '@/lib/badges'
@@ -21,46 +22,58 @@ const PAGE_SIZE = 10
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; driverId?: string; userId?: string; page?: string }>
+  searchParams: Promise<{ tab?: string; driverId?: string; userId?: string; page?: string; estado?: string }>
 }) {
   const { userId: adminId } = await auth()
   if (!adminId || (await getUserRole(adminId)) !== Rol.ADMIN) redirect('/')
 
-  const { tab = 'fondos', driverId, userId, page: pageStr } = await searchParams
+  const { tab = 'fondos', driverId, userId, page: pageStr, estado } = await searchParams
   const driverIdClean = driverId?.trim() || null
   const userIdClean   = userId?.trim()   || null
   const page          = Math.max(1, Number(pageStr ?? 1))
+
+  const VALID_ESTADOS = Object.values(EstadoTransaccion)
+  const estadoFilter  = estado && VALID_ESTADOS.includes(estado as EstadoTransaccion)
+    ? (estado as EstadoTransaccion)
+    : undefined
 
   // ── Panel Financiero data ──────────────────────────────────────────────────
   let banco: Awaited<ReturnType<typeof prisma.bancoCentral.findUnique>> = null
   let billetera: Awaited<ReturnType<typeof prisma.billetera.findUnique>> = null
   let liquidaciones: Awaited<ReturnType<typeof prisma.liquidacion.findMany>> = []
+  let liqTotal = 0
 
   if (tab === 'fondos') {
     banco = await prisma.bancoCentral.findUnique({ where: { id: 'main' } })
     if (driverIdClean) {
-      ;[billetera, liquidaciones] = await Promise.all([
+      ;[billetera, liqTotal, liquidaciones] = await Promise.all([
         prisma.billetera.findUnique({ where: { idConductor: driverIdClean } }),
+        prisma.liquidacion.count({ where: { idConductor: driverIdClean } }),
         prisma.liquidacion.findMany({
           where:   { idConductor: driverIdClean },
           orderBy: { fechaCreacion: 'desc' },
-          take: 10,
+          skip:    (page - 1) * PAGE_SIZE,
+          take:    PAGE_SIZE,
         }),
       ])
     }
   }
+
+  const liqTotalPages = Math.max(1, Math.ceil(liqTotal / PAGE_SIZE))
 
   // ── Transacciones data ─────────────────────────────────────────────────────
   let txs: Awaited<ReturnType<typeof prisma.transaccion.findMany>> = []
   let total = 0
 
   if (tab === 'transacciones' && userIdClean) {
+    const whereTx = {
+      OR: [{ idPasajero: userIdClean }, { idConductor: userIdClean }],
+      ...(estadoFilter ? { estado: estadoFilter } : {}),
+    }
     ;[total, txs] = await Promise.all([
-      prisma.transaccion.count({
-        where: { OR: [{ idPasajero: userIdClean }, { idConductor: userIdClean }] },
-      }),
+      prisma.transaccion.count({ where: whereTx }),
       prisma.transaccion.findMany({
-        where:   { OR: [{ idPasajero: userIdClean }, { idConductor: userIdClean }] },
+        where:   whereTx,
         orderBy: { fechaCreacion: 'desc' },
         skip:    (page - 1) * PAGE_SIZE,
         take:    PAGE_SIZE,
@@ -220,28 +233,56 @@ export default async function AdminPage({
               {liquidaciones.length === 0 ? (
                 <div className="glass-card empty-state"><p>Sin liquidaciones.</p></div>
               ) : (
-                <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Fecha</th>
-                        <th>Monto pagado</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {liquidaciones.map((l) => (
-                        <tr key={l.id}>
-                          <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)' }}>
-                            {l.fechaEjecutada ? fmtDate(l.fechaEjecutada) : '—'}
-                          </td>
-                          <td style={{ fontWeight: 600 }}>{fmt(Number(l.montoPagado))}</td>
-                          <td><span className={`badge ${BADGE_L[l.estado] ?? 'badge-pending'}`}>{l.estado}</span></td>
+                <>
+                  <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Monto pagado</th>
+                          <th>Estado</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {liquidaciones.map((l) => (
+                          <tr key={l.id}>
+                            <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                              {l.fechaEjecutada ? fmtDate(l.fechaEjecutada) : '—'}
+                            </td>
+                            <td style={{ fontWeight: 600 }}>{fmt(Number(l.montoPagado))}</td>
+                            <td><span className={`badge ${BADGE_L[l.estado] ?? 'badge-pending'}`}>{l.estado}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {liqTotalPages > 1 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem', justifyContent: 'flex-end' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+                        {page} / {liqTotalPages}
+                      </span>
+                      {page > 1 && (
+                        <Link
+                          href={`/admin?tab=fondos&driverId=${driverIdClean}&page=${page - 1}`}
+                          className="btn-ghost"
+                          style={{ padding: '0.4rem 1rem', fontSize: '0.78rem', borderRadius: '0.4rem' }}
+                        >
+                          ← anterior
+                        </Link>
+                      )}
+                      {page < liqTotalPages && (
+                        <Link
+                          href={`/admin?tab=fondos&driverId=${driverIdClean}&page=${page + 1}`}
+                          className="btn-ghost"
+                          style={{ padding: '0.4rem 1rem', fontSize: '0.78rem', borderRadius: '0.4rem' }}
+                        >
+                          siguiente →
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
@@ -266,6 +307,30 @@ export default async function AdminPage({
                 autoComplete="off"
                 spellCheck={false}
               />
+              <select
+                name="estado"
+                defaultValue={estadoFilter ?? ''}
+                aria-label="Filtrar por estado"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  borderLeft: '1px solid var(--border)',
+                  color: estadoFilter ? 'var(--text)' : 'var(--muted)',
+                  fontSize: '0.78rem',
+                  fontFamily: "'Courier New', monospace",
+                  letterSpacing: '0.04em',
+                  padding: '0 0.75rem',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  height: '100%',
+                  flexShrink: 0,
+                }}
+              >
+                <option value="">Todos</option>
+                {VALID_ESTADOS.map((e) => (
+                  <option key={e} value={e}>{e}</option>
+                ))}
+              </select>
               {userIdClean && (
                 <a href="/admin?tab=transacciones" className="admin-cmd-clear" aria-label="Limpiar">✕</a>
               )}
@@ -341,7 +406,7 @@ export default async function AdminPage({
                   </span>
                   {page > 1 && (
                     <Link
-                      href={`/admin?tab=transacciones&userId=${userIdClean}&page=${page - 1}`}
+                      href={`/admin?tab=transacciones&userId=${userIdClean}&page=${page - 1}${estadoFilter ? `&estado=${estadoFilter}` : ''}`}
                       className="btn-ghost"
                       style={{ padding: '0.4rem 1rem', fontSize: '0.78rem', borderRadius: '0.4rem' }}
                     >
@@ -350,7 +415,7 @@ export default async function AdminPage({
                   )}
                   {page < totalPages && (
                     <Link
-                      href={`/admin?tab=transacciones&userId=${userIdClean}&page=${page + 1}`}
+                      href={`/admin?tab=transacciones&userId=${userIdClean}&page=${page + 1}${estadoFilter ? `&estado=${estadoFilter}` : ''}`}
                       className="btn-ghost"
                       style={{ padding: '0.4rem 1rem', fontSize: '0.78rem', borderRadius: '0.4rem' }}
                     >
