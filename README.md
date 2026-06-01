@@ -8,6 +8,10 @@ Microservicio de pagos del proyecto DriveMe (IAW 2026). Gestiona transacciones, 
 
 ---
 
+### NOTA:
+
+-Por cookies de tercero dado uso de Clerk y tambien no indexacion de pagina dado que usuario final es Admin Practicas recomendadas en todas las paginas es 77 y SEO 66
+
 ## Acceso
 
 El usuario final es administador, nadie mas debe tener acceso a esta app ya que el proposito de la misma es servir
