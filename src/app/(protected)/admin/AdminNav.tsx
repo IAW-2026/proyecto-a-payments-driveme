@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 const TABS = [
   { key: 'fondos',        label: 'FONDOS' },
   { key: 'transacciones', label: 'TRANSACCIONES' },
+  { key: 'usuarios',      label: 'USUARIOS' },
 ]
 
 export default function AdminNav() {

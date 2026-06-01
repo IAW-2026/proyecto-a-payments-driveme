@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma'
 import { EstadoTransaccion } from '@/generated/prisma/client'
 import AdminNav from './AdminNav'
 import { fmt, fmtDate } from '@/lib/fmt'
-import { BADGE_TX, BADGE_LIQ, BADGE_L } from '@/lib/badges'
+import { BADGE_TX, BADGE_L } from '@/lib/badges'
 import CopyButton from '@/components/CopyButton'
 
 export const metadata: Metadata = {
@@ -82,6 +82,12 @@ export default async function AdminPage({
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+
+  // ── Usuarios data ──────────────────────────────────────────────────────────
+  let usuarios: Awaited<ReturnType<typeof prisma.usuario.findMany>> = []
+  if (tab === 'usuarios') {
+    usuarios = await prisma.usuario.findMany({ orderBy: { rol: 'asc' } })
+  }
 
   return (
     <main className="page-shell" style={{ maxWidth: '960px' }}>
@@ -297,7 +303,7 @@ export default async function AdminPage({
           </p>
           <form method="GET" action="/admin" aria-label="Buscar transacciones por usuario">
             <input type="hidden" name="tab" value="transacciones" />
-            <div className="admin-cmd-bar" style={{ marginBottom: userIdClean ? '2rem' : '1rem' }}>
+            <div className="admin-cmd-bar" style={{ marginBottom: '0.75rem' }}>
               <span className="cmd-prefix">⌕</span>
               <input
                 name="userId"
@@ -307,36 +313,43 @@ export default async function AdminPage({
                 autoComplete="off"
                 spellCheck={false}
               />
-              <select
-                name="estado"
-                defaultValue={estadoFilter ?? ''}
-                aria-label="Filtrar por estado"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  borderLeft: '1px solid var(--border)',
-                  color: estadoFilter ? 'var(--text)' : 'var(--muted)',
-                  fontSize: '0.78rem',
-                  fontFamily: "'Courier New', monospace",
-                  letterSpacing: '0.04em',
-                  padding: '0 0.75rem',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  height: '100%',
-                  flexShrink: 0,
-                }}
-              >
-                <option value="">Todos</option>
-                {VALID_ESTADOS.map((e) => (
-                  <option key={e} value={e}>{e}</option>
-                ))}
-              </select>
               {userIdClean && (
                 <a href="/admin?tab=transacciones" className="admin-cmd-clear" aria-label="Limpiar">✕</a>
               )}
               <button type="submit" className="cmd-btn">CONSULTAR →</button>
             </div>
           </form>
+
+          {userIdClean && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.6rem', color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginRight: '0.25rem' }}>
+                Estado:
+              </span>
+              {[{ label: 'Todos', value: '' }, ...VALID_ESTADOS.map(e => ({ label: e, value: e }))].map(({ label, value }) => {
+                const isActive = (value === '' && !estadoFilter) || value === estadoFilter
+                return (
+                  <Link
+                    key={label}
+                    href={`/admin?tab=transacciones&userId=${userIdClean}${value ? `&estado=${value}` : ''}`}
+                    style={{
+                      padding: '0.2rem 0.75rem',
+                      borderRadius: '20px',
+                      fontSize: '0.7rem',
+                      fontFamily: "'Courier New', monospace",
+                      letterSpacing: '0.04em',
+                      textDecoration: 'none',
+                      border: isActive ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      color: isActive ? 'var(--accent)' : 'var(--muted)',
+                      background: isActive ? 'rgba(52,211,153,0.08)' : 'transparent',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {isActive ? '● ' : ''}{label}
+                  </Link>
+                )
+              })}
+            </div>
+          )}
 
           {!userIdClean && (
             <p style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
@@ -365,7 +378,6 @@ export default async function AdminPage({
                       <th>Monto</th>
                       <th>Método</th>
                       <th>Estado</th>
-                      <th>Liquidación</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -388,11 +400,6 @@ export default async function AdminPage({
                           </span>
                         </td>
                         <td><span className={`badge ${BADGE_TX[tx.estado] ?? 'badge-pending'}`}>{tx.estado}</span></td>
-                        <td>
-                          <span className={`badge ${BADGE_LIQ[tx.estadoLiquidacion] ?? 'badge-pending'}`} style={{ fontSize: '0.7rem' }}>
-                            {tx.estadoLiquidacion}
-                          </span>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -425,6 +432,69 @@ export default async function AdminPage({
                 </div>
               )}
             </>
+          )}
+        </>
+      )}
+
+      {/* ── USUARIOS ──────────────────────────────────────────────────── */}
+      {tab === 'usuarios' && (
+        <>
+          <p style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+            Usuarios registrados en el sistema
+          </p>
+          {usuarios.length === 0 ? (
+            <div className="glass-card empty-state"><p>No hay usuarios registrados. Ejecutá Reseed desde /debug.</p></div>
+          ) : (
+            <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Clerk ID</th>
+                    <th>Rol</th>
+                    <th>Acciones rápidas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usuarios.map((u) => {
+                    const rolColor =
+                      u.rol === 'DRIVER' ? 'var(--accent)' :
+                      u.rol === 'RIDER'  ? '#f59e0b' :
+                      '#a78bfa'
+                    return (
+                      <tr key={u.id}>
+                        <td style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{u.id}</td>
+                        <td>
+                          <span style={{ color: rolColor, fontWeight: 700, fontSize: '0.72rem', letterSpacing: '0.06em' }}>
+                            {u.rol}
+                          </span>
+                        </td>
+                        <td style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          {(u.rol === 'DRIVER' || u.rol === 'ADMIN') && (
+                            <Link
+                              href={`/admin?tab=fondos&driverId=${u.id}`}
+                              style={{ fontSize: '0.75rem', color: 'var(--accent)', textDecoration: 'underline' }}
+                            >
+                              → Billetera
+                            </Link>
+                          )}
+                          {u.rol !== 'ADMIN' && (
+                            <Link
+                              href={`/admin?tab=transacciones&userId=${u.id}`}
+                              style={{ fontSize: '0.75rem', color: '#60a5fa', textDecoration: 'underline' }}
+                            >
+                              → Transacciones
+                            </Link>
+                          )}
+                          {u.rol === 'ADMIN' && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>—</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}
