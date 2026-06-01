@@ -314,6 +314,8 @@ input, select {
   font-family: inherit;
   outline: none;
   transition: border-color 0.2s;
+  min-width: 0;
+  width: 100%;
 }
 input:focus, select:focus { border-color: var(--accent); }
 select option { background: #0d1f3c; }
@@ -437,6 +439,11 @@ select option { background: #0d1f3c; }
   transition: color 0.15s;
 }
 .admin-cmd-clear:hover { color: var(--text); }
+@media (max-width: 640px) {
+  .page-shell  { padding: 1.5rem 1rem; }
+  .field-group { grid-template-columns: 1fr; }
+  .glass-card  { padding: 1.25rem; }
+}
 @media (max-width: 600px) {
   .admin-stat-grid { grid-template-columns: 1fr; }
 }

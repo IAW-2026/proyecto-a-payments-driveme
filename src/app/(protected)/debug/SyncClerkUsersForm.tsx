@@ -54,24 +54,26 @@ export default function SyncClerkUsersForm() {
       {msg && <p className={msg.type === 'success' ? 'msg-success' : 'msg-error'}>{msg.text}</p>}
 
       {result && result.users.length > 0 && (
-        <table style={{ width: '100%', marginTop: '1rem', fontSize: '0.78rem', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ color: 'var(--muted)', textAlign: 'left' }}>
-              <th style={{ paddingBottom: '0.4rem' }}>Clerk ID</th>
-              <th style={{ paddingBottom: '0.4rem' }}>Email</th>
-              <th style={{ paddingBottom: '0.4rem' }}>Rol asignado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.users.map(u => (
-              <tr key={u.id} style={{ borderTop: '1px solid var(--border)' }}>
-                <td style={{ padding: '0.35rem 0', fontFamily: 'monospace', fontSize: '0.75rem' }}>{u.id}</td>
-                <td style={{ padding: '0.35rem 0.5rem' }}>{u.email ?? '—'}</td>
-                <td style={{ padding: '0.35rem 0' }}>{u.rol}</td>
+        <div style={{ overflowX: 'auto', marginTop: '1rem' }}>
+          <table style={{ width: '100%', fontSize: '0.78rem', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ color: 'var(--muted)', textAlign: 'left' }}>
+                <th style={{ paddingBottom: '0.4rem' }}>Clerk ID</th>
+                <th style={{ paddingBottom: '0.4rem' }}>Email</th>
+                <th style={{ paddingBottom: '0.4rem' }}>Rol asignado</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {result.users.map(u => (
+                <tr key={u.id} style={{ borderTop: '1px solid var(--border)' }}>
+                  <td style={{ padding: '0.35rem 0.5rem 0.35rem 0', fontFamily: 'monospace', fontSize: '0.75rem', wordBreak: 'break-all' }}>{u.id}</td>
+                  <td style={{ padding: '0.35rem 0.5rem' }}>{u.email ?? '—'}</td>
+                  <td style={{ padding: '0.35rem 0' }}>{u.rol}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {result && result.users.length === 0 && (
