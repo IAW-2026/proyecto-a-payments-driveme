@@ -10,9 +10,7 @@
 
 | Rol | Email | Contraseña |
 |-----|-------|------------|
-| Administrador | `admin+clerk_test@iaw.com` | `iawuser#` |
-
-> Tarjeta de prueba de Mercado Pago (sandbox): `4242 4242 4242 4242`
+| Administrador | `admin+clerk_test@iaw.com` | `iawuser#` | verfication code: 424242
 
 > El acceso a esta app es exclusivo para administradores. Los roles rider y driver son consumidos vía API por las otras apps del ecosistema; no tienen panel propio aquí.
 
