@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /metodos
+Disallow: /transacciones
+Disallow: /fondos
+Disallow: /admin
+Allow: /
