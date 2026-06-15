@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { mpClient } from "@/lib/mercadopago";
 import { validateServiceToken } from "@/lib/service-auth";
 import { validateAdmin, resolveCallerUser } from "@/lib/validators";
+import type { Prisma } from "@/generated/prisma/client";
 
 const CORTE = 0.10;
 const NETO  = 0.90;
@@ -170,8 +171,24 @@ export async function PUT(req: Request) {
 
 // GET — returns transaction history based on the caller's role
 // Called by driver/rider apps forwarding the user's Clerk JWT
+// Control Plane uses CONTROL_PLANE_SECRET service token — returns all transactions with optional filters
 // RIDER response omits estadoLiquidacion (not relevant to passengers)
 export async function GET(req: Request) {
+  if (validateServiceToken(req, "CONTROL_PLANE_SECRET")) {
+    const { searchParams } = new URL(req.url);
+    const where: Prisma.TransaccionWhereInput = {};
+    const estado            = searchParams.get("estado");
+    const estadoLiquidacion = searchParams.get("estadoLiquidacion");
+    const idConductor       = searchParams.get("idConductor");
+    const idPasajero        = searchParams.get("idPasajero");
+    if (estado)            where.estado            = estado as Prisma.TransaccionWhereInput["estado"];
+    if (estadoLiquidacion) where.estadoLiquidacion = estadoLiquidacion as Prisma.TransaccionWhereInput["estadoLiquidacion"];
+    if (idConductor)       where.idConductor       = idConductor;
+    if (idPasajero)        where.idPasajero        = idPasajero;
+    const transacciones = await prisma.transaccion.findMany({ where, orderBy: { fechaCreacion: "desc" } });
+    return NextResponse.json(transacciones);
+  }
+
   const caller = await resolveCallerUser(req);
   if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

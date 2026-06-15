@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Rol } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { validateDriver, resolveCallerUser } from "@/lib/validators";
+import { validateServiceToken } from "@/lib/service-auth";
 
 const NETO = 0.90;
 
@@ -72,8 +73,20 @@ export async function POST(req: Request) {
   });
 }
 
-// GET — returns billetera summary and liquidation history for a driver
+// GET — returns liquidation history
+// Control Plane uses CONTROL_PLANE_SECRET — returns all liquidaciones with optional ?idConductor= filter
+// Drivers/admins get billetera summary + their own liquidaciones
 export async function GET(req: Request) {
+  if (validateServiceToken(req, "CONTROL_PLANE_SECRET")) {
+    const { searchParams } = new URL(req.url);
+    const idConductor = searchParams.get("idConductor");
+    const liquidaciones = await prisma.liquidacion.findMany({
+      where:   idConductor ? { idConductor } : undefined,
+      orderBy: { fechaCreacion: "desc" },
+    });
+    return NextResponse.json(liquidaciones);
+  }
+
   const caller = await validateDriver(req);
   if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

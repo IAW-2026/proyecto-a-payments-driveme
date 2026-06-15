@@ -23,7 +23,7 @@ export default function TestPostTransaccionForm({ onCreada }: Props) {
     setResult(null)
     setMsg(null)
     try {
-      const res = await fetch('/api/pagos/debug/transacciones', {
+      const res = await fetch('/api/pagos/transacciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,7 +54,7 @@ export default function TestPostTransaccionForm({ onCreada }: Props) {
         El servidor usa el contexto de <code>RIDER_SERVICE_SECRET</code> internamente — idéntico a la app real.
       </p>
 
-      <form onSubmit={handleSubmit} aria-label="POST /api/pagos/debug/transacciones">
+      <form onSubmit={handleSubmit} aria-label="POST /api/pagos/transacciones">
         <div className="field-group" style={{ marginBottom: '1rem' }}>
           <label>
             ID de viaje
@@ -93,7 +93,7 @@ export default function TestPostTransaccionForm({ onCreada }: Props) {
         </div>
 
         <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%' }}>
-          {loading ? 'Enviando…' : 'POST /api/pagos/debug/transacciones'}
+          {loading ? 'Enviando…' : 'POST /api/pagos/transacciones'}
         </button>
       </form>
 

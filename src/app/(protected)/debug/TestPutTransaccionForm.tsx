@@ -24,7 +24,7 @@ export default function TestPutTransaccionForm({ defaultIdTransaccion = '', defa
     setResult(null)
     setMsg(null)
     try {
-      const res = await fetch('/api/pagos/debug/transacciones', {
+      const res = await fetch('/api/pagos/transacciones', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -67,7 +67,7 @@ export default function TestPutTransaccionForm({ defaultIdTransaccion = '', defa
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} aria-label="PUT /api/pagos/debug/transacciones">
+      <form onSubmit={handleSubmit} aria-label="PUT /api/pagos/transacciones">
         <div className="field-group" style={{ marginBottom: '1rem' }}>
           <label>
             ID de transacción
@@ -89,7 +89,7 @@ export default function TestPutTransaccionForm({ defaultIdTransaccion = '', defa
         </div>
 
         <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%' }}>
-          {loading ? 'Enviando…' : 'PUT /api/pagos/debug/transacciones'}
+          {loading ? 'Enviando…' : 'PUT /api/pagos/transacciones'}
         </button>
       </form>
 
