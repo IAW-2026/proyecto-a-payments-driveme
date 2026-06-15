@@ -16,20 +16,22 @@ export async function POST(req: Request) {
     idConductor = body.id_conductor ?? caller.id;
   }
 
-  const pendientes = await prisma.transaccion.findMany({
-    where: {
-      idConductor,
-      estado:            "CONFIRMADO",
-      estadoLiquidacion: "PENDIENTE",
-    },
-    select: { id: true, monto: true },
-  });
+  const [billetera, pendientes] = await Promise.all([
+    prisma.billetera.findUnique({ where: { idConductor }, select: { montoPendiente: true } }),
+    prisma.transaccion.findMany({
+      where: { idConductor, estado: "CONFIRMADO", estadoLiquidacion: "PENDIENTE" },
+      select: { id: true },
+    }),
+  ]);
 
-  if (pendientes.length === 0) {
+  // billetera.montoPendiente is the single source of truth for how much to pay out.
+  // Transactions are marked LIQUIDADO for auditing only — they don't drive the amount.
+  const montoPagado = Number(billetera?.montoPendiente ?? 0);
+
+  if (montoPagado === 0 && pendientes.length === 0) {
     return NextResponse.json({ error: "No pending transactions to liquidate" }, { status: 422 });
   }
 
-  const montoPagado = pendientes.reduce((acc, tx) => acc + Number(tx.monto) * NETO, 0);
   const ids = pendientes.map((tx) => tx.id);
   const ahora = new Date();
 
