@@ -6,17 +6,7 @@ import { validateServiceToken } from "@/lib/service-auth";
 
 const NETO = 0.90;
 
-// POST — driver (or admin) triggers liquidation of all pending confirmed transactions
-export async function POST(req: Request) {
-  const caller = await validateDriver(req);
-  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  let idConductor = caller.id;
-  if (caller.rol === Rol.ADMIN) {
-    const body = await req.json().catch(() => ({}));
-    idConductor = body.id_conductor ?? caller.id;
-  }
-
+async function ejecutarLiquidacion(idConductor: string) {
   const [billetera, pendientes] = await Promise.all([
     prisma.billetera.findUnique({ where: { idConductor }, select: { montoPendiente: true } }),
     prisma.transaccion.findMany({
@@ -25,12 +15,10 @@ export async function POST(req: Request) {
     }),
   ]);
 
-  // billetera.montoPendiente is the single source of truth for how much to pay out.
-  // Transactions are marked LIQUIDADO for auditing only — they don't drive the amount.
   const montoPagado = Number(billetera?.montoPendiente ?? 0);
 
   if (montoPagado === 0 && pendientes.length === 0) {
-    return NextResponse.json({ error: "No pending transactions to liquidate" }, { status: 422 });
+    return { error: "No pending transactions to liquidate" } as const;
   }
 
   const ids = pendientes.map((tx) => tx.id);
@@ -66,11 +54,32 @@ export async function POST(req: Request) {
     }),
   ]);
 
-  return NextResponse.json({
-    id_liquidacion: liquidacion.id,
-    monto_pagado:   montoPagado,
-    estado:         liquidacion.estado,
-  });
+  return { id_liquidacion: liquidacion.id, monto_pagado: montoPagado, estado: liquidacion.estado };
+}
+
+// POST — driver (or admin) triggers liquidation of all pending confirmed transactions
+export async function POST(req: Request) {
+  if (validateServiceToken(req, "CONTROL_PLANE_SECRET")) {
+    const body = await req.json().catch(() => ({}));
+    const idConductor: string | undefined = body.id_conductor;
+    if (!idConductor) return NextResponse.json({ error: "Missing id_conductor" }, { status: 400 });
+    const result = await ejecutarLiquidacion(idConductor);
+    if ("error" in result) return NextResponse.json({ error: result.error }, { status: 422 });
+    return NextResponse.json(result);
+  }
+
+  const caller = await validateDriver(req);
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  let idConductor = caller.id;
+  if (caller.rol === Rol.ADMIN) {
+    const body = await req.json().catch(() => ({}));
+    idConductor = body.id_conductor ?? caller.id;
+  }
+
+  const result = await ejecutarLiquidacion(idConductor);
+  if ("error" in result) return NextResponse.json({ error: result.error }, { status: 422 });
+  return NextResponse.json(result);
 }
 
 // GET — returns liquidation history
