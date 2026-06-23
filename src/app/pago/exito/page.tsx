@@ -79,9 +79,18 @@ export default async function PagoExitoPage({
   return (
     <main style={{ maxWidth: 480, margin: "4rem auto", padding: "0 1rem", textAlign: "center" }}>
       <div className="glass-card" style={{ padding: "2.5rem" }}>
-        <p style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>✓</p>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: "0.75rem" }}>
-          ¡Pago realizado!
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.25rem" }}>
+          <div style={{
+            width: "56px", height: "56px",
+            border: "2px solid var(--success)",
+            borderRadius: "4px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "var(--success)", fontSize: "1.5rem", fontFamily: "var(--font-michroma)",
+            boxShadow: "0 0 20px rgba(5,150,105,0.2)",
+          }}>✓</div>
+        </div>
+        <h1 style={{ fontSize: "1rem", fontWeight: 400, fontFamily: "var(--font-michroma)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
+          Pago realizado
         </h1>
         <p style={{ color: "var(--muted)", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
           El cobro fue procesado correctamente por Mercado Pago.

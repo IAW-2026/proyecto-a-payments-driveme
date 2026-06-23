@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
-import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
+import { Michroma, Plus_Jakarta_Sans } from 'next/font/google'
 import Link from 'next/link'
 import AdminLink from './AdminLink'
 import DebugLink from './DebugLink'
 import './globals.css'
 
-const fraunces = Fraunces({
+const michroma = Michroma({
   subsets: ['latin'],
-  variable: '--font-fraunces',
+  variable: '--font-michroma',
+  weight: '400',
   display: 'swap',
 })
 
@@ -36,22 +37,22 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="preconnect" href="https://clerk-telemetry.com" />
         <link rel="dns-prefetch" href="https://clerk.accounts.dev" />
       </head>
-      <body className={`${fraunces.variable} ${jakarta.variable}`}>
+      <body className={`${michroma.variable} ${jakarta.variable}`}>
         <ClerkProvider>
           <header style={{
             position: 'sticky', top: 0, zIndex: 50,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '0 2rem', height: '4rem',
-            background: 'rgba(5,13,26,0.88)',
+            background: 'rgba(5,5,5,0.92)',
             backdropFilter: 'blur(18px)',
             borderBottom: '1px solid var(--border)',
           }}>
             {/* Marca */}
             <Link href="/" style={{
-              fontFamily: 'var(--font-fraunces)',
-              fontSize: '1.125rem', fontWeight: 800,
+              fontFamily: 'var(--font-michroma)',
+              fontSize: '0.85rem', fontWeight: 400,
               color: 'var(--accent)', textDecoration: 'none',
-              letterSpacing: '-0.03em',
+              letterSpacing: '0.12em', textTransform: 'uppercase',
             }}>
               DriveMe Payments
             </Link>

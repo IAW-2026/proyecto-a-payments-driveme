@@ -23,7 +23,7 @@ export default function AdminNav() {
         padding: '0.25rem',
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid var(--border)',
-        borderRadius: '0.625rem',
+        borderRadius: '6px',
         width: 'fit-content',
       }}
     >
@@ -35,12 +35,13 @@ export default function AdminNav() {
             href={`/admin?tab=${key}`}
             style={{
               padding: '0.5rem 1.25rem',
-              fontWeight: 700,
-              fontSize: '0.72rem',
+              fontFamily: 'var(--font-michroma)',
+              fontWeight: 400,
+              fontSize: '0.6rem',
               letterSpacing: '0.1em',
-              color: isActive ? '#03100d' : 'var(--muted)',
+              color: isActive ? '#FFFFFF' : 'var(--muted)',
               background: isActive ? 'var(--accent)' : 'transparent',
-              borderRadius: '0.375rem',
+              borderRadius: '4px',
               textDecoration: 'none',
               transition: 'background 0.15s, color 0.15s',
               whiteSpace: 'nowrap',

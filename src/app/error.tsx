@@ -7,7 +7,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   useEffect(() => { console.error(error) }, [error])
   return (
     <main className="page-shell" style={{ textAlign: 'center', paddingTop: '6rem' }}>
-      <p style={{ fontSize: '5rem', fontFamily: 'var(--font-fraunces)', fontWeight: 800, color: 'var(--danger)', lineHeight: 1, marginBottom: '1rem' }}>
+      <p style={{ fontSize: '2.5rem', fontFamily: 'var(--font-michroma)', fontWeight: 400, color: 'var(--danger)', lineHeight: 1, marginBottom: '1rem', letterSpacing: '0.1em', textTransform: 'uppercase', textShadow: '0 0 30px rgba(239,68,68,0.4)' }}>
         Error
       </p>
       <h1 className="page-title" style={{ marginBottom: '0.75rem' }}>Algo salió mal</h1>

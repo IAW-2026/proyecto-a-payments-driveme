@@ -10,13 +10,13 @@ export const metadata: Metadata = {
 
 const FEATURES = [
   {
-    icon: '📊',
+    icon: 'TX',
     title: 'Transacciones',
     desc: 'Consultá el historial de transacciones de cualquier usuario registrado. Incluye estado de liquidación.',
     href: '/transacciones',
   },
   {
-    icon: '🏦',
+    icon: 'BC',
     title: 'Panel Financiero',
     desc: 'Revisá la billetera de conductores, liquidaciones e histórico del Banco Central.',
     href: '/fondos',
@@ -52,7 +52,7 @@ export default function Home() {
         {FEATURES.map((f) => (
           <Link key={f.href} href={f.href} className="feature-card" style={{ textDecoration: 'none' }}>
             <div className="feature-icon" aria-hidden="true">{f.icon}</div>
-            <h2 style={{ fontSize: '1rem', fontWeight: 700 }}>{f.title}</h2>
+            <h2 style={{ fontSize: '0.78rem' }}>{f.title}</h2>
             <p>{f.desc}</p>
           </Link>
         ))}

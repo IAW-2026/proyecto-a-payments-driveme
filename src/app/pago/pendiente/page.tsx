@@ -16,8 +16,18 @@ export default async function PagoPendientePage({
   return (
     <main style={{ maxWidth: 480, margin: "4rem auto", padding: "0 1rem", textAlign: "center" }}>
       <div className="glass-card" style={{ padding: "2.5rem" }}>
-        <p style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>⏳</p>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: "0.75rem" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.25rem" }}>
+          <div style={{
+            width: "56px", height: "56px",
+            border: "2px solid var(--warning)",
+            borderRadius: "4px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "var(--warning)", fontSize: "1.2rem", fontFamily: "var(--font-michroma)",
+            letterSpacing: "0.1em",
+            boxShadow: "0 0 20px rgba(217,119,6,0.2)",
+          }}>···</div>
+        </div>
+        <h1 style={{ fontSize: "1rem", fontWeight: 400, fontFamily: "var(--font-michroma)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
           Pago en proceso
         </h1>
         <p style={{ color: "var(--muted)", fontSize: "0.9rem", marginBottom: "1.5rem" }}>

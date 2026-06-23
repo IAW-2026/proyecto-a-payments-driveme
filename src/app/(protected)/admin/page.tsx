@@ -128,10 +128,11 @@ export default async function AdminPage({
           </span>
         </div>
         <h1 style={{
-          fontFamily: 'var(--font-fraunces)',
-          fontSize: 'clamp(1.75rem, 4vw, 2.25rem)',
-          fontWeight: 800,
-          letterSpacing: '-0.04em',
+          fontFamily: 'var(--font-michroma)',
+          fontSize: 'clamp(1.4rem, 4vw, 1.9rem)',
+          fontWeight: 400,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase' as const,
           color: 'var(--text)',
           margin: 0,
         }}>
@@ -151,9 +152,9 @@ export default async function AdminPage({
             <div className="admin-stat-panel" style={{ borderTopColor: 'var(--accent)' }}>
               <p className="balance-label">A debitar · conductores</p>
               <p style={{
-                fontFamily: 'var(--font-fraunces)',
+                fontFamily: 'var(--font-michroma)',
                 fontSize: '1.8rem',
-                fontWeight: 700,
+                fontWeight: 400,
                 color: 'var(--accent)',
                 letterSpacing: '-0.03em',
                 marginTop: '0.35rem',
@@ -164,9 +165,9 @@ export default async function AdminPage({
             <div className="admin-stat-panel" style={{ borderTopColor: 'var(--gold)' }}>
               <p className="balance-label">Fondos empresa · 10%</p>
               <p style={{
-                fontFamily: 'var(--font-fraunces)',
+                fontFamily: 'var(--font-michroma)',
                 fontSize: '1.8rem',
-                fontWeight: 700,
+                fontWeight: 400,
                 color: 'var(--gold)',
                 letterSpacing: '-0.03em',
                 marginTop: '0.35rem',
@@ -177,9 +178,9 @@ export default async function AdminPage({
             <div className="admin-stat-panel" style={{ borderTopColor: 'var(--muted)' }}>
               <p className="balance-label">Debitado histórico</p>
               <p style={{
-                fontFamily: 'var(--font-fraunces)',
+                fontFamily: 'var(--font-michroma)',
                 fontSize: '1.8rem',
-                fontWeight: 700,
+                fontWeight: 400,
                 color: 'var(--muted)',
                 letterSpacing: '-0.03em',
                 marginTop: '0.35rem',
@@ -340,7 +341,7 @@ export default async function AdminPage({
                       textDecoration: 'none',
                       border: isActive ? '1px solid var(--accent)' : '1px solid var(--border)',
                       color: isActive ? 'var(--accent)' : 'var(--muted)',
-                      background: isActive ? 'rgba(52,211,153,0.08)' : 'transparent',
+                      background: isActive ? 'rgba(220,38,38,0.08)' : 'transparent',
                       transition: 'all 0.15s',
                     }}
                   >
@@ -458,8 +459,8 @@ export default async function AdminPage({
                   {usuarios.map((u) => {
                     const rolColor =
                       u.rol === 'DRIVER' ? 'var(--accent)' :
-                      u.rol === 'RIDER'  ? '#f59e0b' :
-                      '#a78bfa'
+                      u.rol === 'RIDER'  ? 'var(--warning)' :
+                      'var(--info)'
                     return (
                       <tr key={u.id}>
                         <td style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{u.id}</td>

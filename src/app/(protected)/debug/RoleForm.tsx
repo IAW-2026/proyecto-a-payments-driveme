@@ -43,11 +43,12 @@ export default function RoleForm() {
   return (
     <div className="glass-card" style={{ maxWidth: '480px' }}>
       <h2 style={{
-        fontFamily: 'var(--font-fraunces)',
-        fontSize: '1.1rem',
-        fontWeight: 700,
+        fontFamily: 'var(--font-michroma)',
+        fontSize: '0.72rem',
+        fontWeight: 400,
         marginBottom: '1.5rem',
-        letterSpacing: '-0.02em',
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase' as const,
       }}>
         Actualizar rol de usuario
       </h2>

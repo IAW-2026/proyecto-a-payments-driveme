@@ -67,19 +67,19 @@ export default function MockGetLiquidacionesForm() {
           <div style={{ display: 'flex', gap: '3rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             <div>
               <p className="balance-label">Pendiente de liquidar</p>
-              <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent)' }}>
+              <p style={{ fontSize: '1.25rem', fontWeight: 400, color: 'var(--accent)' }}>
                 {fmt(result.montoPendiente)}
               </p>
             </div>
             <div>
               <p className="balance-label">Liquidado histórico</p>
-              <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--muted)' }}>
+              <p style={{ fontSize: '1.25rem', fontWeight: 400, color: 'var(--muted)' }}>
                 {fmt(result.montoLiquidado)}
               </p>
             </div>
           </div>
 
-          <h3 style={{ fontFamily: 'var(--font-fraunces)', fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-michroma)', fontSize: '0.65rem', fontWeight: 400, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
             Historial de liquidaciones ({result.liquidaciones.length})
           </h3>
 
