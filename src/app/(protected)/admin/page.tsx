@@ -389,7 +389,7 @@ export default async function AdminPage({
                         </td>
                         <td><CopyButton value={tx.id} /></td>
                         <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--muted)' }}>
-                          {tx.idViaje.slice(0, 8)}…
+                          {tx.idViaje ? tx.idViaje.slice(0, 8) + '…' : '—'}
                         </td>
                         <td style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
                           {tx.idPasajero === userIdClean ? 'Pasajero' : 'Conductor'}

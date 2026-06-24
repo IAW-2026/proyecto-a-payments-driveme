@@ -50,9 +50,10 @@ model Usuario {
 
 model Transaccion {
   id                   String              @id @default(uuid())
-  idViaje              String              @unique
+  idViaje              String?             @unique
+  idSolicitud          String?             @unique
   idPasajero           String
-  idConductor          String
+  idConductor          String?
   metodoPago           MetodoPago
   monto                Decimal             @db.Decimal(12, 2)
   estado               EstadoTransaccion   @default(PENDIENTE)

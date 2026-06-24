@@ -4,18 +4,16 @@ import { useState, useEffect } from 'react'
 
 interface Props {
   defaultIdTransaccion?: string
-  defaultPerspectiva?: 'DRIVER' | 'RIDER'
 }
 
-export default function TestPutTransaccionForm({ defaultIdTransaccion = '', defaultPerspectiva = 'DRIVER' }: Props) {
+export default function TestPutTransaccionForm({ defaultIdTransaccion = '' }: Props) {
   const [idTransaccion, setIdTransaccion] = useState(defaultIdTransaccion)
-  const [perspectiva, setPerspectiva]     = useState<'DRIVER' | 'RIDER'>(defaultPerspectiva)
 
   useEffect(() => { if (defaultIdTransaccion) setIdTransaccion(defaultIdTransaccion) }, [defaultIdTransaccion])
-  useEffect(() => { setPerspectiva(defaultPerspectiva) }, [defaultPerspectiva])
-  const [loading, setLoading]             = useState(false)
-  const [result, setResult]               = useState<any>(null)
-  const [msg, setMsg]                     = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const [loading, setLoading] = useState(false)
+  const [result, setResult]   = useState<any>(null)
+  const [msg, setMsg]         = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()
@@ -27,15 +25,12 @@ export default function TestPutTransaccionForm({ defaultIdTransaccion = '', defa
       const res = await fetch('/api/pagos/transacciones', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_transaccion: idTransaccion.trim(),
-          perspectiva,
-        }),
+        body: JSON.stringify({ id_transaccion: idTransaccion.trim() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
       setResult(data)
-      setMsg({ type: 'success', text: `Transacción procesada: ${data.estado ?? data.id_transaccion}` })
+      setMsg({ type: 'success', text: 'Preferencia MP creada — usá el init_point para pagar' })
     } catch (err: any) {
       setMsg({ type: 'error', text: err.message })
     } finally {
@@ -46,50 +41,27 @@ export default function TestPutTransaccionForm({ defaultIdTransaccion = '', defa
   return (
     <div className="glass-card">
       <p style={{ fontSize: '0.82rem', color: 'var(--muted)', marginBottom: '1rem' }}>
-        Simula el procesamiento de una transacción existente. El servidor usa <code>DRIVER_SERVICE_SECRET</code> o <code>RIDER_SERVICE_SECRET</code> según la perspectiva — idéntico a la app real.
+        Solo para <strong>MERCADO_PAGO</strong>. Simula Rider App generando la preferencia de pago.
+        Requiere una transacción en estado <code>PENDIENTE</code> creada con el POST anterior.
+        Devuelve el <code>init_point</code> para redirigir al checkout de MP.
       </p>
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem',
-        padding: '0.75rem', background: 'rgba(255,255,255,0.03)',
-        borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.82rem',
-      }}>
-        <div>
-          <p style={{ color: 'var(--gold)', fontWeight: 600 }}>DRIVER (EFECTIVO)</p>
-          <p style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>
-            El conductor confirma fin de viaje en efectivo. La transacción pasa a CONFIRMADO y actualiza la billetera.
-          </p>
-        </div>
-        <div>
-          <p style={{ color: 'var(--accent)', fontWeight: 600 }}>RIDER (MERCADO_PAGO)</p>
-          <p style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>
-            El pasajero inicia el pago con Mercado Pago. Crea la preferencia y devuelve el <code>init_point</code>.
-          </p>
-        </div>
-      </div>
 
       <form onSubmit={handleSubmit} aria-label="PUT /api/pagos/transacciones">
-        <div className="field-group" style={{ marginBottom: '1rem' }}>
+        <div className="field-group single" style={{ marginBottom: '1.5rem' }}>
           <label>
             ID de transacción
             <input
               value={idTransaccion}
               onChange={e => setIdTransaccion(e.target.value)}
-              placeholder="uuid de la transacción"
+              placeholder="uuid de la transacción PENDIENTE"
               style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
               required
             />
           </label>
-          <label>
-            Perspectiva
-            <select value={perspectiva} onChange={e => setPerspectiva(e.target.value as 'DRIVER' | 'RIDER')}>
-              <option value="DRIVER">DRIVER — efectivo</option>
-              <option value="RIDER">RIDER — Mercado Pago</option>
-            </select>
-          </label>
         </div>
 
         <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%' }}>
-          {loading ? 'Enviando…' : 'PUT /api/pagos/transacciones'}
+          {loading ? 'Generando preferencia…' : 'PUT /api/pagos/transacciones'}
         </button>
       </form>
 
@@ -109,13 +81,9 @@ export default function TestPutTransaccionForm({ defaultIdTransaccion = '', defa
 
       {result && (
         <pre style={{
-          marginTop: '1rem',
-          padding: '0.75rem',
-          background: 'rgba(255,255,255,0.04)',
-          borderRadius: '8px',
-          fontSize: '0.78rem',
-          overflowX: 'auto',
-          color: 'var(--muted)',
+          marginTop: '1rem', padding: '0.75rem',
+          background: 'rgba(255,255,255,0.04)', borderRadius: '8px',
+          fontSize: '0.78rem', overflowX: 'auto', color: 'var(--muted)',
         }}>
           {JSON.stringify(result, null, 2)}
         </pre>

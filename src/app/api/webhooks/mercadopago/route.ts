@@ -3,8 +3,18 @@ import { Payment } from "mercadopago";
 import { prisma } from "@/lib/prisma";
 import { mpClient } from "@/lib/mercadopago";
 
-const CORTE = 0.10;
-const NETO  = 0.90;
+function notifyRider(id_solicitud: string, id_transaccion: string, estado_pago: "APROBADO" | "RECHAZADO", monto: number) {
+  const riderUrl = process.env.RIDER_APP_URL;
+  if (!riderUrl) return;
+  fetch(`${riderUrl}/api/solicitudes/${id_solicitud}/pagos`, {
+    method:  "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization:  `Bearer ${process.env.PAYMENTS_SERVICE_SECRET ?? ""}`,
+    },
+    body: JSON.stringify({ id_solicitud, estado_pago, id_transaccion, monto }),
+  }).catch(() => {});
+}
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -32,40 +42,18 @@ export async function POST(req: Request) {
   }
 
   if (paymentData.status === "approved") {
-    const monto = Number(transaccion.monto);
-    const neto  = monto * NETO;
-    const corte = monto * CORTE;
+    // Confirm the transaction. Billetera and BancoCentral are updated later
+    // via PATCH /transacciones once the driver completes the trip and idConductor is known.
+    await prisma.transaccion.update({
+      where: { id: id_transaccion },
+      data: {
+        estado:         "CONFIRMADO",
+        detalleGateway: { payment_id: paymentId, status: paymentData.status },
+      },
+    });
 
-    await prisma.$transaction([
-      prisma.transaccion.update({
-        where: { id: id_transaccion },
-        data: {
-          estado:         "CONFIRMADO",
-          detalleGateway: { payment_id: paymentId, status: paymentData.status },
-        },
-      }),
-      prisma.billetera.upsert({
-        where:  { idConductor: transaccion.idConductor },
-        create: { idConductor: transaccion.idConductor, montoPendiente: neto },
-        update: { montoPendiente: { increment: neto } },
-      }),
-      prisma.bancoCentral.upsert({
-        where:  { id: "main" },
-        create: { id: "main", fondosADebitar: neto, fondosEmpresa: corte },
-        update: {
-          fondosADebitar: { increment: neto },
-          fondosEmpresa:  { increment: corte },
-        },
-      }),
-    ]);
-
-    const riderUrl = process.env.RIDER_APP_URL;
-    if (riderUrl) {
-      fetch(`${riderUrl}/api/viajes/${transaccion.idViaje}/pago-confirmado`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ id_transaccion, estado: "CAPTURED", monto }),
-      }).catch(() => {});
+    if (transaccion.idSolicitud) {
+      notifyRider(transaccion.idSolicitud, id_transaccion, "APROBADO", Number(transaccion.monto));
     }
   } else if (paymentData.status === "rejected" || paymentData.status === "cancelled") {
     await prisma.transaccion.update({
@@ -75,6 +63,10 @@ export async function POST(req: Request) {
         detalleGateway: { payment_id: paymentId, status: paymentData.status },
       },
     });
+
+    if (transaccion.idSolicitud) {
+      notifyRider(transaccion.idSolicitud, id_transaccion, "RECHAZADO", Number(transaccion.monto));
+    }
   }
 
   return NextResponse.json({ ok: true });

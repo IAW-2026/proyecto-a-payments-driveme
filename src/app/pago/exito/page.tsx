@@ -9,9 +9,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const NETO  = 0.90;
-const CORTE = 0.10;
-
 async function confirmPayment(paymentId: string) {
   try {
     const payment = new Payment(mpClient);
@@ -25,39 +22,30 @@ async function confirmPayment(paymentId: string) {
     const transaccion = await prisma.transaccion.findUnique({ where: { id: id_transaccion } });
     if (!transaccion || transaccion.estado !== "PENDIENTE") return; // idempotency
 
-    const monto = Number(transaccion.monto);
-    const neto  = monto * NETO;
-    const corte = monto * CORTE;
-
-    await prisma.$transaction([
-      prisma.transaccion.update({
-        where: { id: id_transaccion },
-        data: {
-          estado:         "CONFIRMADO",
-          detalleGateway: { payment_id: paymentId, status: "approved" },
-        },
-      }),
-      prisma.billetera.upsert({
-        where:  { idConductor: transaccion.idConductor },
-        create: { idConductor: transaccion.idConductor, montoPendiente: neto },
-        update: { montoPendiente: { increment: neto } },
-      }),
-      prisma.bancoCentral.upsert({
-        where:  { id: "main" },
-        create: { id: "main", fondosADebitar: neto, fondosEmpresa: corte },
-        update: {
-          fondosADebitar: { increment: neto },
-          fondosEmpresa:  { increment: corte },
-        },
-      }),
-    ]);
+    // Confirm transaction only — billetera/BancoCentral are updated later via
+    // PATCH /transacciones once the driver completes the trip and idConductor is known
+    await prisma.transaccion.update({
+      where: { id: id_transaccion },
+      data: {
+        estado:         "CONFIRMADO",
+        detalleGateway: { payment_id: paymentId, status: "approved" },
+      },
+    });
 
     const riderUrl = process.env.RIDER_APP_URL;
-    if (riderUrl) {
-      fetch(`${riderUrl}/api/viajes/${transaccion.idViaje}/pago-confirmado`, {
+    if (riderUrl && transaccion.idSolicitud) {
+      fetch(`${riderUrl}/api/solicitudes/${transaccion.idSolicitud}/pagos`, {
         method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ id_transaccion, estado: "CAPTURED", monto }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization:  `Bearer ${process.env.PAYMENTS_SERVICE_SECRET ?? ""}`,
+        },
+        body: JSON.stringify({
+          id_solicitud:   transaccion.idSolicitud,
+          estado_pago:    "APROBADO",
+          id_transaccion,
+          monto:          Number(transaccion.monto),
+        }),
       }).catch(() => {});
     }
   } catch {
