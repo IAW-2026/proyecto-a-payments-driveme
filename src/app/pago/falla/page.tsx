@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Pago rechazado — DriveMe",
@@ -37,9 +36,9 @@ export default async function PagoFallaPage({
             ID de referencia: {params.payment_id}
           </p>
         )}
-        <Link href="/" className="btn-primary" style={{ display: "inline-block" }}>
+        <a href={process.env.RIDER_APP_URL ?? "/"} className="btn-primary" style={{ display: "inline-block", textDecoration: "none" }}>
           Volver al inicio
-        </Link>
+        </a>
       </div>
     </main>
   );

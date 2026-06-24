@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Payment } from "mercadopago";
 import { mpClient } from "@/lib/mercadopago";
 import { prisma } from "@/lib/prisma";
@@ -88,9 +87,9 @@ export default async function PagoExitoPage({
             ID de pago: {params.payment_id}
           </p>
         )}
-        <Link href="/" className="btn-primary" style={{ display: "inline-block" }}>
+        <a href={process.env.RIDER_APP_URL ?? "/"} className="btn-primary" style={{ display: "inline-block", textDecoration: "none" }}>
           Volver al inicio
-        </Link>
+        </a>
       </div>
     </main>
   );
