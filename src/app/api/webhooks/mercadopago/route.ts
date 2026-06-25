@@ -5,15 +5,25 @@ import { mpClient } from "@/lib/mercadopago";
 
 function notifyRider(id_solicitud: string, id_transaccion: string, estado_pago: "APROBADO" | "RECHAZADO", monto: number) {
   const riderUrl = process.env.RIDER_APP_URL;
-  if (!riderUrl) return;
-  fetch(`${riderUrl}/api/solicitudes/${id_solicitud}/pagos`, {
+  if (!riderUrl) {
+    console.error("[notifyRider] RIDER_APP_URL not set — skipping notification");
+    return;
+  }
+  const url = `${riderUrl}/api/solicitudes/${id_solicitud}/pagos`;
+  console.log(`[notifyRider] → ${url}`, { estado_pago, id_transaccion, monto });
+  fetch(url, {
     method:  "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization:  `Bearer ${process.env.PAYMENTS_SERVICE_SECRET ?? ""}`,
     },
     body: JSON.stringify({ id_solicitud, estado_pago, id_transaccion, monto }),
-  }).catch(() => {});
+  })
+    .then(async (res) => {
+      const text = await res.text();
+      console.log(`[notifyRider] ← ${res.status}`, text);
+    })
+    .catch((err) => console.error("[notifyRider] fetch error:", err));
 }
 
 export async function POST(req: Request) {
