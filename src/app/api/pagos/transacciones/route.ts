@@ -54,6 +54,13 @@ export async function POST(req: Request) {
 
     const monto_num = Number(monto);
 
+    // Idempotency: if a non-cancelled transaction already exists for this solicitud, return it
+    //
+    const existing = await prisma.transaccion.findUnique({ where: { idSolicitud: id_solicitud } });
+    if (existing && existing.estado !== "CANCELADO") {
+      return NextResponse.json({ id_transaccion: existing.id, estado: existing.estado }, { status: 200 });
+    }
+
     const transaccion = await prisma.$transaction(async (tx) => {
       const created = await tx.transaccion.create({
         data: {
