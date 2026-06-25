@@ -10,10 +10,10 @@ import type { Prisma } from "@/generated/prisma/client";
 const CORTE = 0.10;
 const NETO  = 0.90;
 
-function notifyRider(id_solicitud: string, id_transaccion: string, estado_pago: "APROBADO" | "RECHAZADO", monto: number) {
-  const riderUrl = process.env.RIDER_APP_URL;
+async function notifyRider(id_solicitud: string, id_transaccion: string, estado_pago: "APROBADO" | "RECHAZADO", monto: number) {
+  const riderUrl = process.env.RIDER_APP_URL?.trim();
   if (!riderUrl) return;
-  fetch(`${riderUrl}/api/solicitudes/${id_solicitud}/pagos`, {
+  await fetch(`${riderUrl}/api/solicitudes/${id_solicitud}/pagos`, {
     method:  "POST",
     headers: {
       "Content-Type": "application/json",
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       return created;
     });
 
-    notifyRider(id_solicitud, transaccion.id, "APROBADO", monto_num);
+    await notifyRider(id_solicitud, transaccion.id, "APROBADO", monto_num);
 
     return NextResponse.json({ id_transaccion: transaccion.id, estado: "CONFIRMADO" }, { status: 201 });
   }
