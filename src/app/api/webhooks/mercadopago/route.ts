@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { mpClient } from "@/lib/mercadopago";
 
 async function notifyRider(id_solicitud: string, id_transaccion: string, estado_pago: "APROBADO" | "RECHAZADO", monto: number) {
-  const riderUrl = process.env.RIDER_APP_URL;
+  const riderUrl = process.env.RIDER_APP_URL?.trim();
   if (!riderUrl) return;
   await fetch(`${riderUrl}/api/solicitudes/${id_solicitud}/pagos`, {
     method:  "POST",

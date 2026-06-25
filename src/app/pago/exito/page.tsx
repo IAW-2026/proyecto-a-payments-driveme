@@ -13,15 +13,17 @@ async function confirmPayment(paymentId: string) {
     const payment = new Payment(mpClient);
     const paymentData = await payment.get({ id: paymentId });
 
+    console.log("[exito] payment status:", paymentData.status, "external_reference:", paymentData.external_reference);
+
     if (paymentData.status !== "approved") return;
 
     const id_transaccion = paymentData.external_reference;
-    if (!id_transaccion) return;
+    if (!id_transaccion) { console.log("[exito] no external_reference"); return; }
 
     const transaccion = await prisma.transaccion.findUnique({ where: { id: id_transaccion } });
-    if (!transaccion) return;
+    console.log("[exito] transaccion:", transaccion?.id, "estado:", transaccion?.estado, "idSolicitud:", transaccion?.idSolicitud);
+    if (!transaccion) { console.log("[exito] transaccion not found"); return; }
 
-    // Update DB only if still PENDIENTE (webhook may have already done it)
     if (transaccion.estado === "PENDIENTE") {
       await prisma.transaccion.update({
         where: { id: id_transaccion },
@@ -32,10 +34,10 @@ async function confirmPayment(paymentId: string) {
       });
     }
 
-    // Always notify rider — Rider App must handle duplicates idempotently
-    const riderUrl = process.env.RIDER_APP_URL;
+    const riderUrl = process.env.RIDER_APP_URL?.trim();
+    console.log("[exito] riderUrl:", riderUrl, "idSolicitud:", transaccion.idSolicitud);
     if (riderUrl && transaccion.idSolicitud) {
-      await fetch(`${riderUrl}/api/solicitudes/${transaccion.idSolicitud}/pagos`, {
+      const res = await fetch(`${riderUrl}/api/solicitudes/${transaccion.idSolicitud}/pagos`, {
         method:  "POST",
         headers: {
           "Content-Type": "application/json",
@@ -47,10 +49,11 @@ async function confirmPayment(paymentId: string) {
           id_transaccion,
           monto:          Number(transaccion.monto),
         }),
-      }).catch(() => {});
+      });
+      console.log("[exito] notifyRider response:", res.status);
     }
-  } catch {
-    // fail silently — webhook will catch it if it arrives later
+  } catch (err) {
+    console.error("[exito] confirmPayment error:", err);
   }
 }
 
