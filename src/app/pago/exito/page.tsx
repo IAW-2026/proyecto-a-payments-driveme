@@ -35,7 +35,7 @@ async function confirmPayment(paymentId: string) {
     // Always notify rider — Rider App must handle duplicates idempotently
     const riderUrl = process.env.RIDER_APP_URL;
     if (riderUrl && transaccion.idSolicitud) {
-      fetch(`${riderUrl}/api/solicitudes/${transaccion.idSolicitud}/pagos`, {
+      await fetch(`${riderUrl}/api/solicitudes/${transaccion.idSolicitud}/pagos`, {
         method:  "POST",
         headers: {
           "Content-Type": "application/json",

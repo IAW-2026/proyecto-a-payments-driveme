@@ -3,27 +3,17 @@ import { Payment } from "mercadopago";
 import { prisma } from "@/lib/prisma";
 import { mpClient } from "@/lib/mercadopago";
 
-function notifyRider(id_solicitud: string, id_transaccion: string, estado_pago: "APROBADO" | "RECHAZADO", monto: number) {
+async function notifyRider(id_solicitud: string, id_transaccion: string, estado_pago: "APROBADO" | "RECHAZADO", monto: number) {
   const riderUrl = process.env.RIDER_APP_URL;
-  if (!riderUrl) {
-    console.error("[notifyRider] RIDER_APP_URL not set — skipping notification");
-    return;
-  }
-  const url = `${riderUrl}/api/solicitudes/${id_solicitud}/pagos`;
-  console.log(`[notifyRider] → ${url}`, { estado_pago, id_transaccion, monto });
-  fetch(url, {
+  if (!riderUrl) return;
+  await fetch(`${riderUrl}/api/solicitudes/${id_solicitud}/pagos`, {
     method:  "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization:  `Bearer ${process.env.PAYMENTS_SERVICE_SECRET ?? ""}`,
     },
     body: JSON.stringify({ id_solicitud, estado_pago, id_transaccion, monto }),
-  })
-    .then(async (res) => {
-      const text = await res.text();
-      console.log(`[notifyRider] ← ${res.status}`, text);
-    })
-    .catch((err) => console.error("[notifyRider] fetch error:", err));
+  }).catch(() => {});
 }
 
 export async function POST(req: Request) {
@@ -63,7 +53,7 @@ export async function POST(req: Request) {
     });
 
     if (transaccion.idSolicitud) {
-      notifyRider(transaccion.idSolicitud, id_transaccion, "APROBADO", Number(transaccion.monto));
+      await notifyRider(transaccion.idSolicitud, id_transaccion, "APROBADO", Number(transaccion.monto));
     }
   } else if (paymentData.status === "rejected" || paymentData.status === "cancelled") {
     await prisma.transaccion.update({
@@ -75,7 +65,7 @@ export async function POST(req: Request) {
     });
 
     if (transaccion.idSolicitud) {
-      notifyRider(transaccion.idSolicitud, id_transaccion, "RECHAZADO", Number(transaccion.monto));
+      await notifyRider(transaccion.idSolicitud, id_transaccion, "RECHAZADO", Number(transaccion.monto));
     }
   }
 
