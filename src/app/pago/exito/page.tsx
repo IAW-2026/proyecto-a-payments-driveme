@@ -19,18 +19,20 @@ async function confirmPayment(paymentId: string) {
     if (!id_transaccion) return;
 
     const transaccion = await prisma.transaccion.findUnique({ where: { id: id_transaccion } });
-    if (!transaccion || transaccion.estado !== "PENDIENTE") return; // idempotency
+    if (!transaccion) return;
 
-    // Confirm transaction only — billetera/BancoCentral are updated later via
-    // PATCH /transacciones once the driver completes the trip and idConductor is known
-    await prisma.transaccion.update({
-      where: { id: id_transaccion },
-      data: {
-        estado:         "CONFIRMADO",
-        detalleGateway: { payment_id: paymentId, status: "approved" },
-      },
-    });
+    // Update DB only if still PENDIENTE (webhook may have already done it)
+    if (transaccion.estado === "PENDIENTE") {
+      await prisma.transaccion.update({
+        where: { id: id_transaccion },
+        data: {
+          estado:         "CONFIRMADO",
+          detalleGateway: { payment_id: paymentId, status: "approved" },
+        },
+      });
+    }
 
+    // Always notify rider — Rider App must handle duplicates idempotently
     const riderUrl = process.env.RIDER_APP_URL;
     if (riderUrl && transaccion.idSolicitud) {
       fetch(`${riderUrl}/api/solicitudes/${transaccion.idSolicitud}/pagos`, {
