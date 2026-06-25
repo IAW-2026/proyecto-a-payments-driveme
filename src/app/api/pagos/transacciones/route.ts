@@ -12,15 +12,20 @@ const NETO  = 0.90;
 
 async function notifyRider(id_solicitud: string, id_transaccion: string, estado_pago: "APROBADO" | "RECHAZADO", monto: number) {
   const riderUrl = process.env.RIDER_APP_URL?.trim();
-  if (!riderUrl) return;
-  await fetch(`${riderUrl}/api/solicitudes/${id_solicitud}/pagos`, {
-    method:  "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization:  `Bearer ${process.env.PAYMENTS_SERVICE_SECRET ?? ""}`,
-    },
-    body: JSON.stringify({ id_solicitud, estado_pago, id_transaccion, monto }),
-  }).catch(() => {});
+  if (!riderUrl) { console.error("[notifyRider] RIDER_APP_URL no configurado"); return; }
+  try {
+    const res = await fetch(`${riderUrl}/api/solicitudes/${id_solicitud}/pagos`, {
+      method:  "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization:  `Bearer ${process.env.PAYMENTS_SERVICE_SECRET ?? ""}`,
+      },
+      body: JSON.stringify({ id_solicitud, estado_pago, id_transaccion, monto }),
+    });
+    if (!res.ok) console.error("[notifyRider] falló:", res.status, await res.text());
+  } catch (e) {
+    console.error("[notifyRider] error de red:", e);
+  }
 }
 
 // POST — two paths based on caller:
