@@ -103,6 +103,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const existing = await prisma.transaccion.findUnique({ where: { idSolicitud: id_solicitud } });
+    if (existing) {
+      if (existing.estado !== "CANCELADO") {
+        return NextResponse.json({ id_transaccion: existing.id, estado: existing.estado }, { status: 200 });
+      }
+      // If cancelled, allow re-creation by clearing the old idSolicitud link
+      await prisma.transaccion.update({ where: { id: existing.id }, data: { idSolicitud: null } });
+    }
+
     const transaccion = await prisma.transaccion.create({
       data: {
         idPasajero:        id_pasajero,
