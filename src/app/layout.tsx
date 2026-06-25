@@ -4,7 +4,6 @@ import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from '@cl
 import { Michroma, Plus_Jakarta_Sans } from 'next/font/google'
 import Link from 'next/link'
 import AdminLink from './AdminLink'
-import DebugLink from './DebugLink'
 import './globals.css'
 
 const michroma = Michroma({
@@ -64,7 +63,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   <Link key={href} href={href} className="nav-link">{label}</Link>
                 ))}
                 <Suspense fallback={null}><AdminLink /></Suspense>
-                <Suspense fallback={null}><DebugLink /></Suspense>
               </nav>
             </Show>
 
